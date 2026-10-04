@@ -1,0 +1,20 @@
+{
+  "name": "高山棋局",
+  "short_name": "高山棋局",
+  "description": "无需网络即可游玩的国际象棋，电脑棋力约 1000 分。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071713",
+  "theme_color": "#102a25",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

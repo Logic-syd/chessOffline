@@ -1,0 +1,13 @@
+<!-- Angular king redrawn for 高山棋局, GPL-2.0-or-later. See NOTICE.txt. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" width="45" height="45" style="color-scheme:light only">
+  <g fill="#fffdf5" stroke="#282b28" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="square">
+    <!-- A broad, solid cross stays legible on a phone-sized square. -->
+    <path d="M20.5 4h4v4h4v3.5h-4v5h-4v-5h-4V8h4Z"/>
+    <!-- Faceted crown, tapered stem, and a level, stepped plinth. -->
+    <path d="m11.5 15.5 6.5 2 2-3h5l2 3 6.5-2-4.5 9H16Z"/>
+    <path d="M18.5 25h8l1.5 7H17Z"/>
+    <path d="M15.5 23.5h14v3h-14Z"/>
+    <path d="M15 32h15l3.5 4.5h-22Z"/>
+    <path d="M9.5 36.5h26v4h-26Z"/>
+  </g>
+</svg>

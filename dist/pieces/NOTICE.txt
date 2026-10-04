@@ -1,0 +1,14 @@
+Queen, rook, bishop, knight and pawn artwork: Colin M. L. Burnett (Cburnett).
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/cburnett
+License: GNU General Public License, version 2 or (at your option) any later version.
+License listing: https://github.com/lichess-org/lila/blob/master/COPYING.md
+Full license: COPYING.txt in this directory.
+
+Changes for 高山棋局: use the light-piece silhouettes for both sides;
+white fill changed to ivory, black fill changed to charcoal, outlines softened.
+These modified SVG assets remain licensed under GPL-2.0-or-later.
+The SVG files alongside this notice are their complete editable source.
+
+King artwork (wK.svg and bK.svg): angular geometry redrawn for 高山棋局.
+The king uses a solid cross, faceted crown and stepped pedestal, with the
+same ivory/charcoal palette. These SVG files are also GPL-2.0-or-later.
