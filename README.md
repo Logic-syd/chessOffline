@@ -45,7 +45,45 @@ Service Worker 需要 HTTPS 或 `localhost` 等安全上下文。直接双击 `i
 
 将 `dist/` 的全部内容作为网站发布目录，保留 `pieces/` 子目录及其中的许可文件，并启用 HTTPS。无需后端、数据库或 API 密钥。
 
-更新应用资源时，请同步更新 `dist/sw.js` 中的缓存版本号。设备再次联网打开应用后，才有机会获取新版本；已经离线的设备会继续使用缓存版本。
+更新应用资源时，请通过下面的版本命令同步更新离线缓存版本。设备再次联网打开应用后，才有机会获取新版本；已经离线的设备会继续使用缓存版本。上传 GitHub 源码或创建 Git 标签不会自动部署网站，发布时仍需要更新托管服务上的 `dist/`。
+
+## 简单版本管理
+
+`VERSION` 是版本号的唯一维护入口，历史变更记录在 [CHANGELOG.md](CHANGELOG.md)。页面底部会显示当前版本；离线缓存随版本更新，已有棋局的存储标识保持不变。
+
+采用 `主版本.次版本.修订号`：修复问题用 `patch`（如 1.0.0 → 1.0.1），兼容的新功能用 `minor`（→ 1.1.0），不兼容变更用 `major`（→ 2.0.0）。首个正式标签为 `v1.0.0`，早期内部缓存编号不作为发布版本。
+
+维护版本需要 Node.js 16.20 或以上，无需安装依赖；运行棋局本身不需要 Node.js。在仓库根目录运行：
+
+```sh
+# 检查版本号、页面、离线缓存与日志是否一致
+node scripts/version.mjs --check
+
+# 跑版本工具的自动化测试
+node --test tests/version.test.mjs
+
+# 完成修改后，升级版本并填写本次更新说明
+node scripts/version.mjs patch "修复棋盘显示问题"
+```
+
+升级命令会一起更新 `VERSION`、页面版本显示、Service Worker 缓存版本和更新日志，不会自动提交、打标签或联网。不要只修改 `VERSION`，否则一致性检查会失败。
+
+确认修改和测试无误后再提交并打标签，例如发布 `1.0.1`：
+
+```sh
+node scripts/version.mjs --check
+node --test tests/version.test.mjs
+git diff
+# 暂存版本文件与应用改动，检查清单后提交
+git add VERSION CHANGELOG.md dist
+git status
+git commit -m "Release v1.0.1"
+git tag -a v1.0.1 -m "Release v1.0.1"
+git push origin main
+git push origin v1.0.1
+```
+
+示例中的版本号应替换为本次 `VERSION` 的内容；如还修改了文档或脚本，请单独 `git add 文件路径`。每个标签固定一个可追溯版本，不移动或覆盖已有标签。想查看旧版本时可用 `git show v1.0.0:CHANGELOG.md`，也可在 GitHub 的 Tags 页面下载对应源码。
 
 ## 存档与隐私
 
@@ -56,6 +94,10 @@ Service Worker 需要 HTTPS 或 `localhost` 等安全上下文。直接双击 `i
 ## 项目结构
 
 ```text
+VERSION                   # 唯一维护的版本号
+CHANGELOG.md              # 逐版本更新记录
+scripts/version.mjs       # 检查与升级版本（无第三方依赖）
+tests/version.test.mjs    # 版本工具测试
 dist/
 ├── index.html             # 页面结构
 ├── styles.css             # 棋盘、移动端布局与对局反馈

@@ -1,5 +1,6 @@
 const CACHE_PREFIX = "kilimanjaro-chess-";
-const CACHE_NAME = `${CACHE_PREFIX}v2.2-angular-king`;
+const APP_VERSION = "1.0.0";
+const CACHE_NAME = `${CACHE_PREFIX}v${APP_VERSION}`;
 const APP_SHELL = [
   "./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg",
   "./pieces/NOTICE.txt", "./pieces/COPYING.txt",
