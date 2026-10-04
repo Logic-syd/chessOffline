@@ -191,7 +191,9 @@
   }
 
   function applyCore(game, move, withNotation = true) {
-    const next = cloneGame(game);
+    // Search and legality checks only change the board; their histories stay read-only.
+    // Real moves still own separate history arrays before appending notation/positions.
+    const next = withNotation ? cloneGame(game) : { ...game, board: [...game.board] };
     const piece = next.board[move.from];
     const color = pieceColor(piece);
     const captured = move.enPassant ? next.board[move.to + (color === "w" ? 8 : -8)] : next.board[move.to];
@@ -237,6 +239,10 @@
 
   function legalMoves(game, color = game.turn) {
     return pseudoMoves(game, color).filter(move => !inCheck(applyCore(game, move, false), color));
+  }
+
+  function hasLegalMove(game, color = game.turn) {
+    return pseudoMoves(game, color).some(move => !inCheck(applyCore(game, move, false), color));
   }
 
   function moveNotation(before, after, move, piece, captured) {
@@ -305,8 +311,7 @@
   }
 
   function gameOutcomeFast(game) {
-    const moves = legalMoves(game);
-    if (moves.length) return null;
+    if (hasLegalMove(game)) return null;
     return { winner: inCheck(game, game.turn) ? opponent(game.turn) : null };
   }
 
@@ -393,6 +398,11 @@
       promotionDialog: document.getElementById("promotionDialog"),
       promotionOptions: document.getElementById("promotionOptions"),
       connectionStatus: document.getElementById("connectionStatus"),
+      offlineCheckButton: document.getElementById("offlineCheckButton"),
+      offlineDetail: document.getElementById("offlineDetail"),
+      powerSaveButton: document.getElementById("powerSaveButton"),
+      powerSaveState: document.getElementById("powerSaveState"),
+      powerSaveDetail: document.getElementById("powerSaveDetail"),
       toast: document.getElementById("toast"),
       sideButtons: [...document.querySelectorAll(".side-button")],
     };
@@ -403,12 +413,21 @@
     let orientation = "w";
     let preferredSide = "w";
     let thinking = false;
-    let engineToken = 0;
+    let computerScheduler;
     let installPrompt = null;
     let toastTimer = null;
     let resultTimer = null;
     let shownResultKey = null;
     let animateDestination = false;
+    const SETTINGS_KEY = "kilimanjaro-chess-settings-v1";
+    let powerSaving = true;
+    try { powerSaving = JSON.parse(localStorage.getItem(SETTINGS_KEY))?.powerSaving !== false; } catch (_) { /* Default to hiking-friendly settings. */ }
+    const sound = window.ChessRuntime.createFeedback({
+      audioClass: window.AudioContext || window.webkitAudioContext,
+      vibrate: pattern => navigator.vibrate?.(pattern),
+    });
+    let offlineManager;
+    let offlineStatus = { state: "checking", message: "正在检查离线资源，请稍候。" };
 
     function load() {
       try {
@@ -438,20 +457,17 @@
     }
 
     function feedback(capture = false) {
-      if (navigator.vibrate) navigator.vibrate(capture ? [12, 25, 12] : 12);
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const context = new AudioContextClass();
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.frequency.value = capture ? 270 : 390;
-        gain.gain.setValueAtTime(0.025, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.07);
-        oscillator.connect(gain).connect(context.destination);
-        oscillator.start();
-        oscillator.stop(context.currentTime + 0.07);
-      } catch (_) { /* Sound is optional. */ }
+      if (!document.hidden) sound.play(capture);
+    }
+
+    function applyPowerSaving() {
+      document.body.classList.toggle("power-saving", powerSaving);
+      elements.powerSaveButton.setAttribute("aria-pressed", String(powerSaving));
+      elements.powerSaveState.textContent = powerSaving ? "已开启" : "已关闭";
+      elements.powerSaveDetail.textContent = powerSaving
+        ? "静音、无震动、减少动效，走棋高亮保留。"
+        : "启用声音、震动和动效；切到后台仍会暂停待执行的电脑回合。";
+      sound.setEnabled(!powerSaving && !document.hidden);
     }
 
     function performMove(move, byComputer = false) {
@@ -459,7 +475,7 @@
       undoStack.push(cloneGame(game));
       game = applyCore(game, move, true);
       selected = null;
-      animateDestination = true;
+      animateDestination = !powerSaving;
       save();
       feedback(capture);
       render();
@@ -647,7 +663,7 @@
         elements.resultEmblem.append(pieceImage(game.playerColor === "w" ? "K" : "k"));
       }
       elements.resultConfetti.replaceChildren();
-      if (mood === "win") {
+      if (mood === "win" && !powerSaving) {
         for (let i = 0; i < 26; i += 1) {
           const particle = document.createElement("i");
           particle.style.setProperty("--x", `${(i * 37) % 100}%`);
@@ -673,23 +689,13 @@
     }
 
     function scheduleComputer() {
-      if (game.turn === game.playerColor || gameOutcome(game).over) return;
-      const token = ++engineToken;
-      thinking = true;
-      renderStatus();
-      setTimeout(() => {
-        if (token !== engineToken) return;
-        const move = chooseComputerMove(game);
-        thinking = false;
-        if (move) performMove(move, true);
-        else render();
-      }, 420 + Math.random() * 360);
+      computerScheduler.schedule();
     }
 
     function startNewGame(side = preferredSide) {
       clearResult();
       if (elements.promotionDialog.open) elements.promotionDialog.close();
-      engineToken += 1;
+      computerScheduler.cancel();
       thinking = false;
       game = createGame(side);
       preferredSide = side;
@@ -706,7 +712,7 @@
       if (!undoStack.length) return;
       clearResult();
       if (elements.promotionDialog.open) elements.promotionDialog.close();
-      engineToken += 1;
+      computerScheduler.cancel();
       thinking = false;
       do {
         game = undoStack.pop();
@@ -719,8 +725,14 @@
 
     function updateConnection() {
       const offline = !navigator.onLine;
+      const ready = offlineStatus.state === "ready";
       elements.connectionStatus.classList.toggle("offline", offline);
-      elements.connectionStatus.querySelector("span:last-child").textContent = offline ? "当前离线" : "可离线使用";
+      elements.connectionStatus.classList.toggle("unready", !ready);
+      elements.connectionStatus.querySelector("span:last-child").textContent = ready
+        ? (offline ? "离线已就绪" : "离线准备完成")
+        : (offlineStatus.state === "checking" ? "正在检查" : "离线未就绪");
+      elements.offlineDetail.textContent = offlineStatus.message + (ready && offline ? " 当前没有网络，可继续对弈。" : "");
+      elements.offlineCheckButton.disabled = offlineStatus.state === "checking";
     }
 
     function registerWebMcp() {
@@ -789,28 +801,53 @@
 
     window.addEventListener("online", updateConnection);
     window.addEventListener("offline", updateConnection);
+    elements.powerSaveButton.addEventListener("click", () => {
+      powerSaving = !powerSaving;
+      applyPowerSaving();
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ powerSaving })); }
+      catch (_) { showToast("设置暂时无法保存，本次使用仍生效。"); }
+    });
+    elements.offlineCheckButton.addEventListener("click", () => offlineManager?.check());
     updateConnection();
     load();
+    applyPowerSaving();
+    computerScheduler = window.ChessRuntime.createTurnScheduler({
+      canRun: () => game.turn !== game.playerColor && !gameOutcome(game).over,
+      isVisible: () => !document.hidden,
+      onWaiting(value) { thinking = value; renderStatus(); },
+      run() {
+        const move = chooseComputerMove(game);
+        if (move) performMove(move, true);
+        else render();
+      },
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        computerScheduler.cancel();
+        sound.setEnabled(false);
+        save();
+      } else {
+        applyPowerSaving();
+        scheduleComputer();
+      }
+    });
+    window.addEventListener("pagehide", () => { computerScheduler.cancel(); sound.stop(); save(); });
+    window.addEventListener("pageshow", event => {
+      if (event.persisted) { applyPowerSaving(); scheduleComputer(); offlineManager?.check(); }
+    });
     render();
     registerWebMcp();
     if (game.turn !== game.playerColor && !gameOutcome(game).over) scheduleComputer();
 
-    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-      let reloading = false;
-      const wasControlled = Boolean(navigator.serviceWorker.controller);
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (wasControlled && !reloading) {
-          reloading = true;
-          save();
-          location.reload();
-        }
-      });
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {}));
-    }
+    offlineManager = window.ChessOffline.start({
+      version: document.getElementById("appVersion").textContent.replace(/^v/, ""),
+      onStatus(status) { offlineStatus = status; updateConnection(); },
+      beforeReload() { save(); sound.stop(); computerScheduler.cancel(); },
+    });
   }
 
   if (typeof document !== "undefined") initApp();
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { createGame, legalMoves, playUci, gameOutcome, inCheck, chooseComputerMove, algebraic, squareIndex };
+    module.exports = { createGame, cloneGame, applyCore, legalMoves, hasLegalMove, playUci, gameOutcome, inCheck, chooseComputerMove, algebraic, squareIndex };
   }
 })();

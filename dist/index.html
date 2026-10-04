@@ -26,7 +26,7 @@
         </a>
         <div class="connection" id="connectionStatus" role="status">
           <span class="connection-dot" aria-hidden="true"></span>
-          <span>可离线使用</span>
+          <span>离线待检查</span>
         </div>
       </header>
 
@@ -98,12 +98,20 @@
             <span aria-hidden="true">↓</span>
             <span><strong>安装到手机</strong><small>装好后，无信号也能打开</small></span>
           </button>
+          <section class="travel-tools" aria-label="徒步设置">
+            <button class="travel-button" id="powerSaveButton" type="button" aria-pressed="true">
+              <span>省电模式</span><span id="powerSaveState">已开启</span>
+            </button>
+            <p class="travel-detail" id="powerSaveDetail">静音、无震动、减少动效，走棋高亮保留。</p>
+            <button class="travel-button" id="offlineCheckButton" type="button">检查离线资源<span aria-hidden="true">↻</span></button>
+            <p class="travel-detail" id="offlineDetail" role="status">正在检查离线资源，请稍候。</p>
+          </section>
         </aside>
       </main>
 
       <footer>
         <span>每一步都会保存在这台设备上</span>
-        <span class="footer-mark"><span id="appVersion">v1.0.0</span> · 离线引擎 · 低耗电 · <a href="./pieces/NOTICE.txt" target="_blank" rel="noopener">棋子署名</a></span>
+        <span class="footer-mark"><span id="appVersion">v1.1.0</span> · 离线引擎 · 低耗电 · <a href="./pieces/NOTICE.txt" target="_blank" rel="noopener">棋子署名</a></span>
       </footer>
     </div>
 
@@ -139,6 +147,8 @@
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./runtime.js" defer></script>
+    <script src="./offline.js" defer></script>
     <script src="./app.js" defer></script>
   </body>
 </html>

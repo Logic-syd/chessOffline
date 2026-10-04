@@ -11,6 +11,7 @@ A lightweight, battery-conscious offline chess app built for hiking trips. Play 
 - **离线人机对弈**：电脑计算在本机完成，完成首次缓存后，无需网络即可游玩。
 - **轻量电脑对手**：以约 1000 分的休闲体验为目标，适合旅途中来上一局。
 - **省电设计**：原生 HTML、CSS 和 JavaScript，无框架、无运行时依赖；电脑只在自己的回合计算，不持续进行后台棋局分析。
+- **省电模式**：默认开启，关闭声音与震动、减少视觉动效，保留走棋高亮及静态胜负提示。切到后台会暂停待执行的电脑回合；以实际设备体验为准，不承诺节电比例。
 - **自动保存**：在同一设备、同一浏览器中重新打开，可继续未完成的对局。
 - **清晰棋盘**：实心棋子、硬朗的国王造型、上一手起点与终点高亮，以及文字走棋记录。
 - **对局操作**：选择执白或执黑、悔棋、翻转棋盘、开始新局。
@@ -21,11 +22,13 @@ A lightweight, battery-conscious offline chess app built for hiking trips. Play 
 
 ## 出发前：准备离线使用
 
-1. 在有网络时，用手机浏览器打开已通过 **HTTPS** 部署的应用，等待页面和所有棋子加载完成、离线缓存建立。
+1. 在有网络时，用手机浏览器打开已通过 **HTTPS** 部署的应用，等待页面和所有棋子加载完成、离线缓存建立，并使用应用中的离线资源检查确认准备状态。
 2. 点击应用中的“安装到手机”，或使用浏览器的“安装应用 / 添加到主屏幕”。不同浏览器的入口可能不同。
 3. **开启飞行模式，关闭后重新打开应用，实际走几步并等待电脑回应。** 确认这一步成功，再带它出发。
 
 首次访问需要下载资源。安装图标本身不等于缓存一定完成，因此出发前的断网测试很重要。离线期间不要清除该站点的浏览器数据；浏览器也可能因存储空间不足而回收缓存。
+
+“检查离线资源”会核验当前版本、控制页面的 Service Worker，以及本应用全部 22 项缓存路径；不会通过持续联网探测来判断就绪。检查结果只代表当前状态，无法保证浏览器今后不会清理缓存。缺失资源、存储不可用或离线安装失败时，会显示“离线未就绪”，而不是仅凭有网络就提示可离线。
 
 ## 本地运行
 
@@ -59,8 +62,8 @@ Service Worker 需要 HTTPS 或 `localhost` 等安全上下文。直接双击 `i
 # 检查版本号、页面、离线缓存与日志是否一致
 node scripts/version.mjs --check
 
-# 跑版本工具的自动化测试
-node --test tests/version.test.mjs
+# 跑全部自动化测试
+node --test tests/*.test.mjs
 
 # 完成修改后，升级版本并填写本次更新说明
 node scripts/version.mjs patch "修复棋盘显示问题"
@@ -68,22 +71,11 @@ node scripts/version.mjs patch "修复棋盘显示问题"
 
 升级命令会一起更新 `VERSION`、页面版本显示、Service Worker 缓存版本和更新日志，不会自动提交、打标签或联网。不要只修改 `VERSION`，否则一致性检查会失败。
 
-确认修改和测试无误后再提交并打标签，例如发布 `1.0.1`：
+开发采用**稳定 `main` + 短期 `feature/*` / `fix/*` 分支**：功能改动通过小型 PR 和测试合入；低风险的文档小改可直接提交 `main`。不设置长期 `dev`、`test`、`release` 分支。流程取决于发布节奏、风险、旧版维护需求与团队能力，不取决于代码大小。
 
-```sh
-node scripts/version.mjs --check
-node --test tests/version.test.mjs
-git diff
-# 暂存版本文件与应用改动，检查清单后提交
-git add VERSION CHANGELOG.md dist
-git status
-git commit -m "Release v1.0.1"
-git tag -a v1.0.1 -m "Release v1.0.1"
-git push origin main
-git push origin v1.0.1
-```
+版本在功能分支上准备，**PR 合并且合并后验证通过，才在 `main` 的对应提交打标签**。CI 检查语法、版本一致性和测试，不自动合并或部署。完整命令与适用场景见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-示例中的版本号应替换为本次 `VERSION` 的内容；如还修改了文档或脚本，请单独 `git add 文件路径`。每个标签固定一个可追溯版本，不移动或覆盖已有标签。想查看旧版本时可用 `git show v1.0.0:CHANGELOG.md`，也可在 GitHub 的 Tags 页面下载对应源码。
+每个 `vX.Y.Z` 标签固定一个可追溯版本，不移动或覆盖已有标签；`v1.0.0` 保持不变。想查看旧版本时可用 `git show v1.0.0:CHANGELOG.md`，也可在 GitHub 的 Tags 页面下载对应源码。
 
 ## 存档与隐私
 
@@ -96,12 +88,16 @@ git push origin v1.0.1
 ```text
 VERSION                   # 唯一维护的版本号
 CHANGELOG.md              # 逐版本更新记录
+CONTRIBUTING.md           # 分支、PR、检查与发布流程
+.github/workflows/check.yml # 只读 CI 检查，不部署
 scripts/version.mjs       # 检查与升级版本（无第三方依赖）
-tests/version.test.mjs    # 版本工具测试
+tests/                    # 零第三方依赖的自动化测试
 dist/
 ├── index.html             # 页面结构
 ├── styles.css             # 棋盘、移动端布局与对局反馈
 ├── app.js                 # 棋局规则、电脑对手、交互与存档
+├── runtime.js             # 音频资源回收与后台回合暂停
+├── offline.js             # 离线资源清单、就绪自检与更新管理
 ├── sw.js                  # 离线资源缓存
 ├── manifest.webmanifest   # PWA 安装信息
 ├── icon.svg               # 应用图标

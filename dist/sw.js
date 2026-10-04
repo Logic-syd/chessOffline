@@ -1,11 +1,8 @@
-const CACHE_PREFIX = "kilimanjaro-chess-";
-const APP_VERSION = "1.0.0";
+importScripts("./offline.js");
+const CACHE_PREFIX = ChessOffline.scopePrefix(self.registration.scope);
+const APP_VERSION = "1.1.0";
 const CACHE_NAME = `${CACHE_PREFIX}v${APP_VERSION}`;
-const APP_SHELL = [
-  "./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg",
-  "./pieces/NOTICE.txt", "./pieces/COPYING.txt",
-  ...["w", "b"].flatMap(color => ["K", "Q", "R", "B", "N", "P"].map(piece => `./pieces/${color}${piece}.svg`)),
-];
+const APP_SHELL = ChessOffline.APP_SHELL;
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(url => new Request(url, { cache: "reload" })))).then(() => self.skipWaiting()));
@@ -19,8 +16,15 @@ self.addEventListener("activate", event => {
   );
 });
 
+self.addEventListener("message", event => {
+  if (event.data?.type !== "CHESS_OFFLINE_CHECK" || !event.ports[0]) return;
+  event.waitUntil(ChessOffline.inspectCache(caches, CACHE_NAME, self.registration.scope)
+    .then(missing => event.ports[0].postMessage({ version: APP_VERSION, scope: self.registration.scope, missing }))
+    .catch(() => event.ports[0].postMessage({ error: true })));
+});
+
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
+  if (event.request.method !== "GET" || !event.request.url.startsWith(self.registration.scope)) return;
   event.respondWith(
     caches.open(CACHE_NAME).then(async cache => {
       const cached = await cache.match(event.request);
