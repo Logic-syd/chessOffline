@@ -6,6 +6,14 @@
 
 A lightweight, battery-conscious offline chess app built for hiking trips. Play against a local computer opponent and pick up where you left off—even when there’s no signal.
 
+## 公开测试版
+
+[打开测试版棋盘](https://logic-syd.github.io/chessOffline/dist/)
+
+测试站发布自 `feature/power-saving` 分支，当前准备版本为 `1.1.0`，尚未合并到稳定的 `main`。可以直接把链接发给朋友，用 Safari 或 Chrome 打开，先确认页面底部版本，再按下方步骤检查离线使用。测试站的棋局与其他域名上的旧站独立保存。
+
+GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和发布标签不会因此自动部署。测试结束后，删除该分支前应先调整 Pages 发布源或停用测试站。
+
 ## 功能
 
 - **离线人机对弈**：电脑计算在本机完成，完成首次缓存后，无需网络即可游玩。
@@ -48,7 +56,7 @@ Service Worker 需要 HTTPS 或 `localhost` 等安全上下文。直接双击 `i
 
 将 `dist/` 的全部内容作为网站发布目录，保留 `pieces/` 子目录及其中的许可文件，并启用 HTTPS。无需后端、数据库或 API 密钥。
 
-更新应用资源时，请通过下面的版本命令同步更新离线缓存版本。设备再次联网打开应用后，才有机会获取新版本；已经离线的设备会继续使用缓存版本。上传 GitHub 源码或创建 Git 标签不会自动部署网站，发布时仍需要更新托管服务上的 `dist/`。
+更新应用资源时，请通过下面的版本命令同步更新离线缓存版本。设备再次联网打开应用后，才有机会获取新版本；已经离线的设备会继续使用缓存版本。当前只有上方指定的测试分支已配置自动发布；其他分支或 Git 标签不会自动更新网站，正式发布仍需单独确认部署。
 
 ## 简单版本管理
 
