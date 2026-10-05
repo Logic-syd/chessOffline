@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chess multilingual layout regression</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; margin: 24px; background: #eee; color: #222; }
+      button { font: inherit; padding: 8px 16px; }
+      pre { white-space: pre-wrap; }
+      iframe { display: block; border: 0; margin-top: 16px; }
+    </style>
+    <script src="../dist/i18n.js" defer></script>
+    <script src="./layout.browser.js" defer></script>
+  </head>
+  <body>
+    <h1>Multilingual turn-layout regression</h1>
+    <p>Loads the real app markup, translations and CSS without the engine or service worker.
+      Checks every status at phone, tablet and desktop widths. Nothing is written to saved games.</p>
+    <button id="run" type="button">Run layout checks</button>
+    <pre id="results" role="status">Ready</pre>
+    <iframe id="preview" title="Layout fixture" width="1280" height="900"></iframe>
+  </body>
+</html>
