@@ -4,6 +4,11 @@
   const FILES = "abcdefgh";
   const STORAGE_KEY = "kilimanjaro-chess-v1";
   const VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+  const DIFFICULTY_PROFILES = {
+    easy: { depth: 1, noise: 120, shortlist: 8, weights: [0.38, 0.23, 0.15, 0.1, 0.07, 0.04, 0.02, 0.01] },
+    standard: { depth: 2, noise: 24, shortlist: 4, weights: [0.58, 0.24, 0.12, 0.06] },
+    challenge: { depth: 2, noise: 0, shortlist: 1, weights: [1] },
+  };
   const KNIGHT_STEPS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
   const KING_STEPS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
   const BISHOP_DIRS = [[-1,-1],[-1,1],[1,-1],[1,1]];
@@ -191,7 +196,9 @@
   }
 
   function applyCore(game, move, withNotation = true) {
-    const next = cloneGame(game);
+    // Search and legality checks only change the board; their histories stay read-only.
+    // Real moves still own separate history arrays before appending notation/positions.
+    const next = withNotation ? cloneGame(game) : { ...game, board: [...game.board] };
     const piece = next.board[move.from];
     const color = pieceColor(piece);
     const captured = move.enPassant ? next.board[move.to + (color === "w" ? 8 : -8)] : next.board[move.to];
@@ -237,6 +244,10 @@
 
   function legalMoves(game, color = game.turn) {
     return pseudoMoves(game, color).filter(move => !inCheck(applyCore(game, move, false), color));
+  }
+
+  function hasLegalMove(game, color = game.turn) {
+    return pseudoMoves(game, color).some(move => !inCheck(applyCore(game, move, false), color));
   }
 
   function moveNotation(before, after, move, piece, captured) {
@@ -305,8 +316,7 @@
   }
 
   function gameOutcomeFast(game) {
-    const moves = legalMoves(game);
-    if (moves.length) return null;
+    if (hasLegalMove(game)) return null;
     return { winner: inCheck(game, game.turn) ? opponent(game.turn) : null };
   }
 
@@ -340,20 +350,24 @@
     return best;
   }
 
-  function chooseComputerMove(game) {
+  function chooseComputerMove(game, difficulty = "standard") {
     const rootColor = game.turn;
     const moves = legalMoves(game);
     if (!moves.length) return null;
-    const depth = game.moveLog.length < 10 ? 2 : 2;
+    const profile = DIFFICULTY_PROFILES[difficulty] || DIFFICULTY_PROFILES.standard;
     const scored = moves.map(move => ({
       move,
-      score: search(applyCore(game, move, false), depth - 1, -Infinity, Infinity, rootColor) + (Math.random() - 0.5) * 24,
+      score: search(applyCore(game, move, false), profile.depth - 1, -Infinity, Infinity, rootColor) + (Math.random() - 0.5) * profile.noise,
     })).sort((a, b) => b.score - a.score);
 
-    const shortlist = scored.slice(0, Math.min(4, scored.length));
+    const shortlist = scored.slice(0, Math.min(profile.shortlist, scored.length));
     const roll = Math.random();
-    const index = roll < 0.58 ? 0 : roll < 0.82 ? 1 : roll < 0.94 ? 2 : 3;
-    return shortlist[Math.min(index, shortlist.length - 1)].move;
+    let cumulative = 0;
+    for (let index = 0; index < profile.weights.length; index += 1) {
+      cumulative += profile.weights[index];
+      if (roll < cumulative) return shortlist[Math.min(index, shortlist.length - 1)].move;
+    }
+    return shortlist[shortlist.length - 1].move;
   }
 
   function playUci(game, uci) {
@@ -393,8 +407,17 @@
       promotionDialog: document.getElementById("promotionDialog"),
       promotionOptions: document.getElementById("promotionOptions"),
       connectionStatus: document.getElementById("connectionStatus"),
+      offlineCheckButton: document.getElementById("offlineCheckButton"),
+      offlineDetail: document.getElementById("offlineDetail"),
+      powerSaveButton: document.getElementById("powerSaveButton"),
+      powerSaveState: document.getElementById("powerSaveState"),
+      powerSaveDetail: document.getElementById("powerSaveDetail"),
       toast: document.getElementById("toast"),
       sideButtons: [...document.querySelectorAll(".side-button")],
+      difficultyButtons: [...document.querySelectorAll(".difficulty-button")],
+      difficultyLabel: document.getElementById("difficultyLabel"),
+      difficultyDetail: document.getElementById("difficultyDetail"),
+      opponentDifficulty: document.getElementById("opponentDifficulty"),
     };
 
     let game;
@@ -403,12 +426,26 @@
     let orientation = "w";
     let preferredSide = "w";
     let thinking = false;
-    let engineToken = 0;
+    let computerScheduler;
     let installPrompt = null;
     let toastTimer = null;
     let resultTimer = null;
     let shownResultKey = null;
     let animateDestination = false;
+    const SETTINGS_KEY = "kilimanjaro-chess-settings-v1";
+    let powerSaving = true;
+    let difficulty = "standard";
+    try {
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      powerSaving = settings?.powerSaving !== false;
+      if (Object.prototype.hasOwnProperty.call(DIFFICULTY_PROFILES, settings?.difficulty)) difficulty = settings.difficulty;
+    } catch (_) { /* Default to hiking-friendly settings. */ }
+    const sound = window.ChessRuntime.createFeedback({
+      audioClass: window.AudioContext || window.webkitAudioContext,
+      vibrate: pattern => navigator.vibrate?.(pattern),
+    });
+    let offlineManager;
+    let offlineStatus = { state: "checking", message: "正在检查离线资源，请稍候。" };
 
     function load() {
       try {
@@ -437,21 +474,24 @@
       toastTimer = setTimeout(() => elements.toast.classList.remove("show"), 1800);
     }
 
+    function saveSettings() {
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ powerSaving, difficulty })); }
+      catch (_) { return false; }
+      return true;
+    }
+
     function feedback(capture = false) {
-      if (navigator.vibrate) navigator.vibrate(capture ? [12, 25, 12] : 12);
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const context = new AudioContextClass();
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.frequency.value = capture ? 270 : 390;
-        gain.gain.setValueAtTime(0.025, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.07);
-        oscillator.connect(gain).connect(context.destination);
-        oscillator.start();
-        oscillator.stop(context.currentTime + 0.07);
-      } catch (_) { /* Sound is optional. */ }
+      if (!document.hidden) sound.play(capture);
+    }
+
+    function applyPowerSaving() {
+      document.body.classList.toggle("power-saving", powerSaving);
+      elements.powerSaveButton.setAttribute("aria-pressed", String(powerSaving));
+      elements.powerSaveState.textContent = powerSaving ? "已开启" : "已关闭";
+      elements.powerSaveDetail.textContent = powerSaving
+        ? "静音、无震动、减少动效，走棋高亮保留。"
+        : "启用声音、震动和动效；切到后台仍会暂停待执行的电脑回合。";
+      sound.setEnabled(!powerSaving && !document.hidden);
     }
 
     function performMove(move, byComputer = false) {
@@ -459,7 +499,7 @@
       undoStack.push(cloneGame(game));
       game = applyCore(game, move, true);
       selected = null;
-      animateDestination = true;
+      animateDestination = !powerSaving;
       save();
       feedback(capture);
       render();
@@ -614,6 +654,22 @@
       }
     }
 
+    function renderDifficulty() {
+      const labels = { easy: "轻松", standard: "标准", challenge: "挑战" };
+      elements.difficultyLabel.textContent = labels[difficulty];
+      elements.opponentDifficulty.textContent = `${labels[difficulty]}档`;
+      elements.difficultyDetail.textContent = {
+        easy: "少算一层，走法更随和。",
+        standard: "保留当前电脑体验，约 1000 分是目标而非正式定级。",
+        challenge: "保持当前搜索深度，稳定选择评估最高的走法。",
+      }[difficulty];
+      for (const button of elements.difficultyButtons) {
+        const active = button.dataset.difficulty === difficulty;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      }
+    }
+
     function clearResult() {
       clearTimeout(resultTimer);
       resultTimer = null;
@@ -647,7 +703,7 @@
         elements.resultEmblem.append(pieceImage(game.playerColor === "w" ? "K" : "k"));
       }
       elements.resultConfetti.replaceChildren();
-      if (mood === "win") {
+      if (mood === "win" && !powerSaving) {
         for (let i = 0; i < 26; i += 1) {
           const particle = document.createElement("i");
           particle.style.setProperty("--x", `${(i * 37) % 100}%`);
@@ -668,28 +724,19 @@
       renderMoves();
       renderStatus();
       renderSide();
+      renderDifficulty();
       elements.undoButton.disabled = undoStack.length === 0;
       renderResult();
     }
 
     function scheduleComputer() {
-      if (game.turn === game.playerColor || gameOutcome(game).over) return;
-      const token = ++engineToken;
-      thinking = true;
-      renderStatus();
-      setTimeout(() => {
-        if (token !== engineToken) return;
-        const move = chooseComputerMove(game);
-        thinking = false;
-        if (move) performMove(move, true);
-        else render();
-      }, 420 + Math.random() * 360);
+      computerScheduler.schedule();
     }
 
     function startNewGame(side = preferredSide) {
       clearResult();
       if (elements.promotionDialog.open) elements.promotionDialog.close();
-      engineToken += 1;
+      computerScheduler.cancel();
       thinking = false;
       game = createGame(side);
       preferredSide = side;
@@ -706,7 +753,7 @@
       if (!undoStack.length) return;
       clearResult();
       if (elements.promotionDialog.open) elements.promotionDialog.close();
-      engineToken += 1;
+      computerScheduler.cancel();
       thinking = false;
       do {
         game = undoStack.pop();
@@ -719,8 +766,14 @@
 
     function updateConnection() {
       const offline = !navigator.onLine;
+      const ready = offlineStatus.state === "ready";
       elements.connectionStatus.classList.toggle("offline", offline);
-      elements.connectionStatus.querySelector("span:last-child").textContent = offline ? "当前离线" : "可离线使用";
+      elements.connectionStatus.classList.toggle("unready", !ready);
+      elements.connectionStatus.querySelector("span:last-child").textContent = ready
+        ? (offline ? "离线已就绪" : "离线准备完成")
+        : (offlineStatus.state === "checking" ? "正在检查" : "离线未就绪");
+      elements.offlineDetail.textContent = offlineStatus.message + (ready && offline ? " 当前没有网络，可继续对弈。" : "");
+      elements.offlineCheckButton.disabled = offlineStatus.state === "checking";
     }
 
     function registerWebMcp() {
@@ -767,6 +820,12 @@
       save();
       showToast(`已选择执${preferredSide === "w" ? "白" : "黑"}，点“新对局”开始`);
     }));
+    elements.difficultyButtons.forEach(button => button.addEventListener("click", () => {
+      difficulty = button.dataset.difficulty;
+      renderDifficulty();
+      if (saveSettings()) showToast(`电脑棋力已设为${elements.difficultyLabel.textContent}，下次电脑走棋生效`);
+      else showToast("棋力本次生效，但设置暂时无法保存。");
+    }));
 
     window.addEventListener("beforeinstallprompt", event => {
       event.preventDefault();
@@ -789,28 +848,52 @@
 
     window.addEventListener("online", updateConnection);
     window.addEventListener("offline", updateConnection);
+    elements.powerSaveButton.addEventListener("click", () => {
+      powerSaving = !powerSaving;
+      applyPowerSaving();
+      if (!saveSettings()) showToast("设置暂时无法保存，本次使用仍生效。");
+    });
+    elements.offlineCheckButton.addEventListener("click", () => offlineManager?.check());
     updateConnection();
     load();
+    applyPowerSaving();
+    computerScheduler = window.ChessRuntime.createTurnScheduler({
+      canRun: () => game.turn !== game.playerColor && !gameOutcome(game).over,
+      isVisible: () => !document.hidden,
+      onWaiting(value) { thinking = value; renderStatus(); },
+      run() {
+        const move = chooseComputerMove(game, difficulty);
+        if (move) performMove(move, true);
+        else render();
+      },
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        computerScheduler.cancel();
+        sound.setEnabled(false);
+        save();
+      } else {
+        applyPowerSaving();
+        scheduleComputer();
+      }
+    });
+    window.addEventListener("pagehide", () => { computerScheduler.cancel(); sound.stop(); save(); });
+    window.addEventListener("pageshow", event => {
+      if (event.persisted) { applyPowerSaving(); scheduleComputer(); offlineManager?.check(); }
+    });
     render();
     registerWebMcp();
     if (game.turn !== game.playerColor && !gameOutcome(game).over) scheduleComputer();
 
-    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-      let reloading = false;
-      const wasControlled = Boolean(navigator.serviceWorker.controller);
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (wasControlled && !reloading) {
-          reloading = true;
-          save();
-          location.reload();
-        }
-      });
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {}));
-    }
+    offlineManager = window.ChessOffline.start({
+      version: document.getElementById("appVersion").textContent.replace(/^v/, ""),
+      onStatus(status) { offlineStatus = status; updateConnection(); },
+      beforeReload() { save(); sound.stop(); computerScheduler.cancel(); },
+    });
   }
 
   if (typeof document !== "undefined") initApp();
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { createGame, legalMoves, playUci, gameOutcome, inCheck, chooseComputerMove, algebraic, squareIndex };
+    module.exports = { createGame, cloneGame, applyCore, legalMoves, hasLegalMove, playUci, gameOutcome, inCheck, chooseComputerMove, algebraic, squareIndex };
   }
 })();

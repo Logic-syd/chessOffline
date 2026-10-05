@@ -256,7 +256,7 @@ button { color: inherit; }
 .status-card h1 { margin: 7px 0 5px; font-size: 1.6rem; line-height: 1.2; letter-spacing: -0.03em; }
 .status-card p { min-height: 2.6em; margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
 
-.side-choice, .moves-section { padding-top: 20px; }
+.side-choice, .difficulty-choice-section, .moves-section { padding-top: 20px; }
 .section-heading { margin-bottom: 10px; display: flex; align-items: baseline; justify-content: space-between; }
 .section-heading h2 { margin: 0; font-size: 0.86rem; }
 .section-heading span { color: var(--muted); font-size: 0.7rem; }
@@ -288,6 +288,30 @@ button { color: inherit; }
 .side-button span { font: 22px/1 Georgia, serif; }
 .side-button img { width: 26px; height: 26px; }
 .side-button.active { color: var(--pine-950); background: var(--snow); box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16); }
+
+.difficulty-choice {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  background: rgba(3, 17, 14, 0.48);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.difficulty-button {
+  min-height: 42px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.difficulty-button.active { color: var(--pine-950); background: var(--snow); box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16); }
+.difficulty-detail { margin: 7px 0 0; color: var(--muted); font-size: 0.68rem; line-height: 1.5; }
 
 .moves-list {
   height: 132px;
@@ -368,6 +392,18 @@ footer {
 
 .footer-mark { letter-spacing: 0.08em; }
 .footer-mark a { color: inherit; text-underline-offset: 3px; }
+
+.travel-tools { display: grid; gap: 7px; }
+.travel-button { min-height: 42px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; background: var(--pine-850); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-size: 0.77rem; }
+.travel-button[aria-pressed="true"] { border-color: var(--stone); }
+.travel-button[aria-pressed="true"] #powerSaveState { color: var(--amber); }
+.travel-button:disabled { opacity: 0.65; cursor: wait; }
+.travel-detail { margin: 0 0 7px; font-size: 0.68rem; line-height: 1.6; color: var(--muted); }
+.connection.unready .connection-dot { background: var(--amber); box-shadow: none; }
+body.power-saving *, body.power-saving *::before, body.power-saving *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+body.power-saving .result-confetti { display: none; }
+body.power-saving dialog::backdrop { backdrop-filter: none; }
+body.power-saving .piece { filter: none; }
 
 dialog { width: min(390px, calc(100vw - 32px)); max-width: calc(100% - 24px); max-height: calc(100dvh - 24px); padding: 0; color: var(--ink); background: transparent; border: 0; border-radius: 20px; }
 dialog::backdrop { background: rgba(0, 10, 8, 0.74); backdrop-filter: blur(5px); }
