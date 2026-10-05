@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-05
+
+- 修复德语及多语言回合切换时的布局抖动，为动态文字预留空间并增加 264 场景浏览器回归检查。
+
 ## [1.4.0] - 2026-10-05
 
 - Add German interface and localized chess move notation
