@@ -105,6 +105,6 @@ git push origin v1.1.0
 
 正式站点的发布与合并 PR、打标签分开。经维护者确认发布后，再把对应标签的完整 `dist/` 部署到 HTTPS 托管服务，并验证安装、离线重启、棋子加载和旧存档恢复。
 
-当前另外启用了公开测试站：[测试棋盘](https://logic-syd.github.io/chessOffline/dist/)。GitHub Pages 发布源是 `feature/power-saving` 分支的仓库根目录，游戏实际入口位于 `/dist/`。该分支的推送会触发 Pages 自带的构建发布；这不等于合并 `main` 或发布正式版本。测试结束后先调整 Pages 设置，再删除源分支。
+当前另外启用了公开测试站：[测试棋盘](https://logic-syd.github.io/chessOffline/dist/)。GitHub Pages 发布源是 `feature/i18n` 分支的仓库根目录，游戏实际入口位于 `/dist/`，当前测试版本为 `1.4.0`（中英德三语）。该分支的推送会触发 Pages 自带的构建发布；这不等于合并 `main` 或发布正式版本。测试结束后先调整 Pages 设置，再删除源分支。
 
 仓库中的 `Checks` 工作流只有 `contents: read` 权限，不使用项目密钥、不安装第三方 npm 包，也不执行部署。它与 Pages 自带的发布流程是两回事；测试分支没有配置“检查成功后才发布”的门禁，推送前必须先完成本地检查。检查失败时先修复再合并，不通过跳过检查完成正式发布。

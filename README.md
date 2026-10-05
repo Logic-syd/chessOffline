@@ -16,7 +16,7 @@ The README and game interface support Simplified Chinese, English and German. Th
 
 [Play the test version](https://logic-syd.github.io/chessOffline/dist/)
 
-The public test site is still published from `feature/power-saving` at version `1.2.0`. That tested version has been merged into `main`; the newer language work on `feature/i18n` is not deployed at this URL. Share the link with a friend and open it in Safari or Chrome. Check the version in the page footer, then follow the offline preparation steps below. Saved games on this test site are separate from those on the older site hosted on a different domain.
+The public test site is published from `feature/i18n` at version `1.4.0`, with Chinese, English and German available in the language selector. The earlier `1.2.0` test version has been merged into `main`; the multilingual version remains on its feature branch for testing. Share the link with a friend and open it in Safari or Chrome. Check the version in the page footer, then follow the offline preparation steps below. Existing users should reopen the app while online to receive the update. Saved games on this test site are separate from those on the older site hosted on a different domain.
 
 GitHub Pages currently updates the test site after pushes to this test branch. Neither `main` nor release tags are automatically deployed by that configuration. Before deleting the test branch, change the Pages publishing source or disable the test site.
 
@@ -150,7 +150,7 @@ README 和游戏界面支持简体中文、英语、德语。首次打开按浏�
 
 [打开测试版棋盘](https://logic-syd.github.io/chessOffline/dist/)
 
-公开测试站仍从 `feature/power-saving` 分支发布，页面版本为 `1.2.0`。这个测试版已经合入 `main`；`feature/i18n` 上的新语言功能尚未发布到该网址。可以直接把链接发给朋友，用 Safari 或 Chrome 打开，先确认页面底部版本，再按下方步骤检查离线使用。测试站的棋局与其他域名上的旧站独立保存。
+公开测试站从 `feature/i18n` 分支发布，页面版本为 `1.4.0`，可在语言选择器中切换中文、英语和德语。此前的 `1.2.0` 测试版已经合入 `main`；多语言版本仍保留在功能分支供测试。可以直接把链接发给朋友，用 Safari 或 Chrome 打开，先确认页面底部版本，再按下方步骤检查离线使用。使用过旧版的用户请先联网重新打开应用，以接收更新。测试站的棋局与其他域名上的旧站独立保存。
 
 GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和发布标签不会因此自动部署。测试结束后，删除该分支前应先调整 Pages 发布源或停用测试站。
 
