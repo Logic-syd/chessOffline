@@ -256,7 +256,7 @@ button { color: inherit; }
 .status-card h1 { margin: 7px 0 5px; font-size: 1.6rem; line-height: 1.2; letter-spacing: -0.03em; }
 .status-card p { min-height: 2.6em; margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
 
-.side-choice, .moves-section { padding-top: 20px; }
+.side-choice, .difficulty-choice-section, .moves-section { padding-top: 20px; }
 .section-heading { margin-bottom: 10px; display: flex; align-items: baseline; justify-content: space-between; }
 .section-heading h2 { margin: 0; font-size: 0.86rem; }
 .section-heading span { color: var(--muted); font-size: 0.7rem; }
@@ -288,6 +288,30 @@ button { color: inherit; }
 .side-button span { font: 22px/1 Georgia, serif; }
 .side-button img { width: 26px; height: 26px; }
 .side-button.active { color: var(--pine-950); background: var(--snow); box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16); }
+
+.difficulty-choice {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  background: rgba(3, 17, 14, 0.48);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.difficulty-button {
+  min-height: 42px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.difficulty-button.active { color: var(--pine-950); background: var(--snow); box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16); }
+.difficulty-detail { margin: 7px 0 0; color: var(--muted); font-size: 0.68rem; line-height: 1.5; }
 
 .moves-list {
   height: 132px;

@@ -16,14 +16,14 @@ The README is bilingual; the game interface is currently in Simplified Chinese.
 
 [Play the test version](https://logic-syd.github.io/chessOffline/dist/)
 
-The test site is published from `feature/power-saving`. The candidate version is `1.1.0`; it has not yet been merged into the stable `main` branch. Share the link with a friend and open it in Safari or Chrome. Check the version in the page footer, then follow the offline preparation steps below. Saved games on this test site are separate from those on the older site hosted on a different domain.
+The test site is published from `feature/power-saving`. The candidate version is `1.2.0`; it has not yet been merged into the stable `main` branch. Share the link with a friend and open it in Safari or Chrome. Check the version in the page footer, then follow the offline preparation steps below. Saved games on this test site are separate from those on the older site hosted on a different domain.
 
 GitHub Pages currently updates the test site after pushes to this test branch. Neither `main` nor release tags are automatically deployed by that configuration. Before deleting the test branch, change the Pages publishing source or disable the test site.
 
 ### Features
 
 - **Offline play against the computer:** all chess calculations run on the device. Once the initial cache is complete, no network connection is needed to play.
-- **A lightweight opponent:** designed for a casual experience targeting roughly a 1000 rating.
+- **Three computer difficulty settings:** Relaxed, Standard and Challenge. Standard keeps the current casual style; rating labels are not officially calibrated.
 - **Battery-conscious design:** plain HTML, CSS and JavaScript, with no framework or third-party runtime dependencies. The computer calculates only on its turn, without continuous background analysis.
 - **Power-saving mode:** enabled by default. It disables sound and vibration and reduces visual effects, while retaining last-move highlights and static game-result feedback. Pending computer turns pause when the page is hidden. Actual battery use depends on the device; no percentage saving is promised.
 - **Automatic saves:** reopen the app in the same browser on the same device to continue an unfinished game.
@@ -32,7 +32,7 @@ GitHub Pages currently updates the test site after pushes to this test branch. N
 - **Rules and feedback:** supports castling, en passant, all four promotion choices, check and checkmate, plus draws by stalemate, repetition, the fifty-move rule and insufficient material. Results appear when a game ends.
 - **Home-screen installation:** includes a PWA manifest and Service Worker for mobile and desktop browsers.
 
-> “Roughly 1000” is an experience target, not an officially calibrated rating. Battery efficiency is a design goal, not a measured battery-life claim; actual consumption depends on the device, screen brightness and session length.
+> The Standard setting targets a casual experience around 1000, not an officially calibrated rating. Battery efficiency is a design goal, not a measured battery-life claim; actual consumption depends on the device, screen brightness and session length.
 
 ### Before your trip: prepare for offline play
 
@@ -120,7 +120,7 @@ dist/
 └── pieces/                # 12 piece SVGs and artwork license files
 ```
 
-The opponent uses shallow search, position evaluation and a little randomness to keep computation modest and games casual. It is not a professional chess analysis engine.
+The opponent offers three settings using shallow search, position evaluation and controlled randomness to keep computation modest. Standard targets a casual experience around 1000, but none of the settings is an officially calibrated rating or a professional analysis engine.
 
 ### Piece artwork and licensing
 
@@ -146,14 +146,14 @@ README 提供中英文说明；游戏界面目前为简体中文。
 
 [打开测试版棋盘](https://logic-syd.github.io/chessOffline/dist/)
 
-测试站发布自 `feature/power-saving` 分支，当前准备版本为 `1.1.0`，尚未合并到稳定的 `main`。可以直接把链接发给朋友，用 Safari 或 Chrome 打开，先确认页面底部版本，再按下方步骤检查离线使用。测试站的棋局与其他域名上的旧站独立保存。
+测试站发布自 `feature/power-saving` 分支，当前准备版本为 `1.2.0`，尚未合并到稳定的 `main`。可以直接把链接发给朋友，用 Safari 或 Chrome 打开，先确认页面底部版本，再按下方步骤检查离线使用。测试站的棋局与其他域名上的旧站独立保存。
 
 GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和发布标签不会因此自动部署。测试结束后，删除该分支前应先调整 Pages 发布源或停用测试站。
 
 ### 功能
 
 - **离线人机对弈**：电脑计算在本机完成，完成首次缓存后，无需网络即可游玩。
-- **轻量电脑对手**：以约 1000 分的休闲体验为目标，适合旅途中来上一局。
+- **三档电脑棋力**：轻松、标准、挑战；标准档保留当前休闲体验。等级分只是体验目标，未经过正式校准。
 - **省电设计**：原生 HTML、CSS 和 JavaScript，无框架、无运行时依赖；电脑只在自己的回合计算，不持续进行后台棋局分析。
 - **省电模式**：默认开启，关闭声音与震动、减少视觉动效，保留走棋高亮及静态胜负提示。切到后台会暂停待执行的电脑回合；以实际设备体验为准，不承诺节电比例。
 - **自动保存**：在同一设备、同一浏览器中重新打开，可继续未完成的对局。
@@ -162,7 +162,7 @@ GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和
 - **规则与反馈**：支持王车易位、吃过路兵、四种升变选择、将军和将死，以及逼和、重复局面、五十回合和子力不足判和；对局结束时显示胜负或和棋反馈。
 - **可安装到主屏幕**：提供 PWA 清单与 Service Worker，适配手机和桌面浏览器。
 
-> “约 1000 分”是体验目标，未经过正式等级分校准。省电是设计取向，尚无标准化续航测试；实际耗电取决于设备、屏幕亮度与使用时间。
+> 标准档以约 1000 分的休闲体验为目标，未经过正式等级分校准。省电是设计取向，尚无标准化续航测试；实际耗电取决于设备、屏幕亮度与使用时间。
 
 ### 出发前：准备离线使用
 
@@ -250,7 +250,7 @@ dist/
 └── pieces/                # 12 个棋子 SVG 与素材许可
 ```
 
-电脑使用浅层搜索、局面评估和少量随机选择，以控制计算量并提供轻松的对弈体验。它不是专业棋力分析引擎。
+电脑按三档使用浅层搜索、局面评估和不同程度的随机选择，以控制计算量。标准档以约 1000 分的休闲体验为目标，但并非正式定级或专业棋力分析引擎。
 
 ### 棋子素材与许可
 

@@ -152,15 +152,17 @@ test("simulation reuses read-only histories; committed moves and clones own thei
   assert.equal(JSON.stringify(game), before);
 });
 
-test("AI and legality checks leave even long frozen game histories unchanged", () => {
+test("all AI difficulties choose legal moves without changing long frozen histories", () => {
   const game = play("e2e4 e7e5 g1f3 b8c6 f1b5 a7a6");
   game.moveLog = Array.from({ length: 160 }, (_, i) => `move-${i}`);
   game.positions = Array.from({ length: 161 }, (_, i) => `position-${i}`);
   freezeGame(game);
-  const before = JSON.stringify(game);
   const legal = legalMoves(game);
-  const move = chooseComputerMove(game);
-  assert.ok(legal.some(candidate => JSON.stringify(candidate) === JSON.stringify(move)));
+  for (const difficulty of ["easy", "standard", "challenge"]) {
+    const before = JSON.stringify(game);
+    const move = chooseComputerMove(game, difficulty);
+    assert.ok(legal.some(candidate => JSON.stringify(candidate) === JSON.stringify(move)), `${difficulty} returns a legal move`);
+    assert.equal(JSON.stringify(game), before, `${difficulty} leaves the game unchanged`);
+  }
   assert.equal(hasLegalMove(game), true);
-  assert.equal(JSON.stringify(game), before);
 });

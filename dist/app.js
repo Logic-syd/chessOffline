@@ -4,6 +4,11 @@
   const FILES = "abcdefgh";
   const STORAGE_KEY = "kilimanjaro-chess-v1";
   const VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+  const DIFFICULTY_PROFILES = {
+    easy: { depth: 1, noise: 120, shortlist: 8, weights: [0.38, 0.23, 0.15, 0.1, 0.07, 0.04, 0.02, 0.01] },
+    standard: { depth: 2, noise: 24, shortlist: 4, weights: [0.58, 0.24, 0.12, 0.06] },
+    challenge: { depth: 2, noise: 0, shortlist: 1, weights: [1] },
+  };
   const KNIGHT_STEPS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
   const KING_STEPS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
   const BISHOP_DIRS = [[-1,-1],[-1,1],[1,-1],[1,1]];
@@ -345,20 +350,24 @@
     return best;
   }
 
-  function chooseComputerMove(game) {
+  function chooseComputerMove(game, difficulty = "standard") {
     const rootColor = game.turn;
     const moves = legalMoves(game);
     if (!moves.length) return null;
-    const depth = game.moveLog.length < 10 ? 2 : 2;
+    const profile = DIFFICULTY_PROFILES[difficulty] || DIFFICULTY_PROFILES.standard;
     const scored = moves.map(move => ({
       move,
-      score: search(applyCore(game, move, false), depth - 1, -Infinity, Infinity, rootColor) + (Math.random() - 0.5) * 24,
+      score: search(applyCore(game, move, false), profile.depth - 1, -Infinity, Infinity, rootColor) + (Math.random() - 0.5) * profile.noise,
     })).sort((a, b) => b.score - a.score);
 
-    const shortlist = scored.slice(0, Math.min(4, scored.length));
+    const shortlist = scored.slice(0, Math.min(profile.shortlist, scored.length));
     const roll = Math.random();
-    const index = roll < 0.58 ? 0 : roll < 0.82 ? 1 : roll < 0.94 ? 2 : 3;
-    return shortlist[Math.min(index, shortlist.length - 1)].move;
+    let cumulative = 0;
+    for (let index = 0; index < profile.weights.length; index += 1) {
+      cumulative += profile.weights[index];
+      if (roll < cumulative) return shortlist[Math.min(index, shortlist.length - 1)].move;
+    }
+    return shortlist[shortlist.length - 1].move;
   }
 
   function playUci(game, uci) {
@@ -405,6 +414,10 @@
       powerSaveDetail: document.getElementById("powerSaveDetail"),
       toast: document.getElementById("toast"),
       sideButtons: [...document.querySelectorAll(".side-button")],
+      difficultyButtons: [...document.querySelectorAll(".difficulty-button")],
+      difficultyLabel: document.getElementById("difficultyLabel"),
+      difficultyDetail: document.getElementById("difficultyDetail"),
+      opponentDifficulty: document.getElementById("opponentDifficulty"),
     };
 
     let game;
@@ -421,7 +434,12 @@
     let animateDestination = false;
     const SETTINGS_KEY = "kilimanjaro-chess-settings-v1";
     let powerSaving = true;
-    try { powerSaving = JSON.parse(localStorage.getItem(SETTINGS_KEY))?.powerSaving !== false; } catch (_) { /* Default to hiking-friendly settings. */ }
+    let difficulty = "standard";
+    try {
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      powerSaving = settings?.powerSaving !== false;
+      if (Object.prototype.hasOwnProperty.call(DIFFICULTY_PROFILES, settings?.difficulty)) difficulty = settings.difficulty;
+    } catch (_) { /* Default to hiking-friendly settings. */ }
     const sound = window.ChessRuntime.createFeedback({
       audioClass: window.AudioContext || window.webkitAudioContext,
       vibrate: pattern => navigator.vibrate?.(pattern),
@@ -454,6 +472,12 @@
       elements.toast.classList.add("show");
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => elements.toast.classList.remove("show"), 1800);
+    }
+
+    function saveSettings() {
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ powerSaving, difficulty })); }
+      catch (_) { return false; }
+      return true;
     }
 
     function feedback(capture = false) {
@@ -630,6 +654,22 @@
       }
     }
 
+    function renderDifficulty() {
+      const labels = { easy: "轻松", standard: "标准", challenge: "挑战" };
+      elements.difficultyLabel.textContent = labels[difficulty];
+      elements.opponentDifficulty.textContent = `${labels[difficulty]}档`;
+      elements.difficultyDetail.textContent = {
+        easy: "少算一层，走法更随和。",
+        standard: "保留当前电脑体验，约 1000 分是目标而非正式定级。",
+        challenge: "保持当前搜索深度，稳定选择评估最高的走法。",
+      }[difficulty];
+      for (const button of elements.difficultyButtons) {
+        const active = button.dataset.difficulty === difficulty;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      }
+    }
+
     function clearResult() {
       clearTimeout(resultTimer);
       resultTimer = null;
@@ -684,6 +724,7 @@
       renderMoves();
       renderStatus();
       renderSide();
+      renderDifficulty();
       elements.undoButton.disabled = undoStack.length === 0;
       renderResult();
     }
@@ -779,6 +820,12 @@
       save();
       showToast(`已选择执${preferredSide === "w" ? "白" : "黑"}，点“新对局”开始`);
     }));
+    elements.difficultyButtons.forEach(button => button.addEventListener("click", () => {
+      difficulty = button.dataset.difficulty;
+      renderDifficulty();
+      if (saveSettings()) showToast(`电脑棋力已设为${elements.difficultyLabel.textContent}，下次电脑走棋生效`);
+      else showToast("棋力本次生效，但设置暂时无法保存。");
+    }));
 
     window.addEventListener("beforeinstallprompt", event => {
       event.preventDefault();
@@ -804,8 +851,7 @@
     elements.powerSaveButton.addEventListener("click", () => {
       powerSaving = !powerSaving;
       applyPowerSaving();
-      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ powerSaving })); }
-      catch (_) { showToast("设置暂时无法保存，本次使用仍生效。"); }
+      if (!saveSettings()) showToast("设置暂时无法保存，本次使用仍生效。");
     });
     elements.offlineCheckButton.addEventListener("click", () => offlineManager?.check());
     updateConnection();
@@ -816,7 +862,7 @@
       isVisible: () => !document.hidden,
       onWaiting(value) { thinking = value; renderStatus(); },
       run() {
-        const move = chooseComputerMove(game);
+        const move = chooseComputerMove(game, difficulty);
         if (move) performMove(move, true);
         else render();
       },

@@ -35,7 +35,7 @@
           <div class="player-row opponent-row">
             <div class="player-identity">
               <span class="avatar computer-avatar" aria-hidden="true">♞</span>
-              <span><strong>高山向导</strong><small>电脑 · 约 1000 分</small></span>
+              <span><strong>高山向导</strong><small>电脑 · <span id="opponentDifficulty">标准档</span></small></span>
             </div>
             <span class="thinking-badge" id="thinkingBadge" hidden><i></i>思考中</span>
           </div>
@@ -69,6 +69,19 @@
               <button class="side-button active" type="button" data-side="w" aria-pressed="true"><img src="./pieces/wP.svg" alt="" width="26" height="26" />执白</button>
               <button class="side-button" type="button" data-side="b" aria-pressed="false"><img src="./pieces/bP.svg" alt="" width="26" height="26" />执黑</button>
             </div>
+          </section>
+
+          <section class="difficulty-choice-section" aria-labelledby="difficultyTitle">
+            <div class="section-heading">
+              <h2 id="difficultyTitle">选择电脑棋力</h2>
+              <span id="difficultyLabel">标准</span>
+            </div>
+            <div class="difficulty-choice" role="group" aria-label="选择电脑棋力">
+              <button class="difficulty-button" type="button" data-difficulty="easy" aria-pressed="false">轻松</button>
+              <button class="difficulty-button active" type="button" data-difficulty="standard" aria-pressed="true">标准</button>
+              <button class="difficulty-button" type="button" data-difficulty="challenge" aria-pressed="false">挑战</button>
+            </div>
+            <p class="difficulty-detail" id="difficultyDetail">保留当前电脑体验，约 1000 分是目标而非正式定级。</p>
           </section>
 
           <section class="moves-section" aria-labelledby="movesTitle">
@@ -111,7 +124,7 @@
 
       <footer>
         <span>每一步都会保存在这台设备上</span>
-        <span class="footer-mark"><span id="appVersion">v1.1.0</span> · 离线引擎 · 低耗电 · <a href="./pieces/NOTICE.txt" target="_blank" rel="noopener">棋子署名</a></span>
+        <span class="footer-mark"><span id="appVersion">v1.2.0</span> · 离线引擎 · 低耗电 · <a href="./pieces/NOTICE.txt" target="_blank" rel="noopener">棋子署名</a></span>
       </footer>
     </div>
 
