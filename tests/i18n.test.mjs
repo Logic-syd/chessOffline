@@ -33,3 +33,18 @@ test("offline results translate from stable codes without changing their data", 
   i18n.setLocale("zh");
   assert.match(i18n.offlineMessage(status), /缺少 2 项/);
 });
+
+test("German labels and move notation render without changing saved notation", () => {
+  assert.equal(preferredLocale(undefined, ["de-DE", "en-US"]), "de");
+  const i18n = createI18n("de", []);
+  assert.equal(i18n.t("status.yourTurn"), "Du bist am Zug");
+  assert.match(i18n.offlineMessage({ code: "incomplete", count: 3 }), /3 fehlen/);
+  const saved = "Q×d7#";
+  assert.equal(i18n.formatMoveNotation(saved), "D×d7#");
+  assert.equal(i18n.formatMoveNotation("Nf3"), "Sf3");
+  assert.equal(i18n.formatMoveNotation("e8=Q+"), "e8=D+");
+  assert.equal(i18n.formatMoveNotation("O-O"), "O-O");
+  assert.equal(saved, "Q×d7#");
+  i18n.setLocale("en");
+  assert.equal(i18n.formatMoveNotation(saved), saved);
+});

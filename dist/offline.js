@@ -6,7 +6,7 @@
   "use strict";
   const APP_SHELL = [
     "./", "./index.html", "./styles.css", "./app.js", "./offline.js", "./runtime.js", "./i18n.js",
-    "./manifest.webmanifest", "./manifest.en.webmanifest", "./icon.svg", "./pieces/NOTICE.txt", "./pieces/COPYING.txt",
+    "./manifest.webmanifest", "./manifest.en.webmanifest", "./manifest.de.webmanifest", "./icon.svg", "./pieces/NOTICE.txt", "./pieces/COPYING.txt",
     ...["w", "b"].flatMap(color => ["K", "Q", "R", "B", "N", "P"].map(piece => `./pieces/${color}${piece}.svg`)),
   ];
 

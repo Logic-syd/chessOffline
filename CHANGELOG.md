@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-05
+
+- Add German interface and localized chess move notation
+
 ## [1.3.0] - 2026-10-05
 
 - Add offline Chinese and English interface with saved language selection

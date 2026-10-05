@@ -1,6 +1,6 @@
 # Kilimanjaro Chess · chessOffline
 
-[English](#english) | [简体中文](#chinese)
+[English](#english) | [简体中文](#chinese) | [Deutsch](#deutsch)
 
 <a id="english"></a>
 
@@ -10,7 +10,7 @@ A lightweight, battery-conscious offline chess app built for hiking trips. Play 
 
 The idea was simple: on a hiking trip to Kilimanjaro, I wanted to play chess during breaks without relying on a network connection. So I built a small app that keeps both the board and the computer opponent on the phone.
 
-The README is bilingual. The game interface supports Simplified Chinese and English, selected from the browser language on first use or changed manually in the app. Your choice is saved on this device.
+The README and game interface support Simplified Chinese, English and German. The browser language selects the interface on first use; you can switch manually at any time. Your choice is saved on this device.
 
 ### Public test version
 
@@ -31,7 +31,7 @@ GitHub Pages currently updates the test site after pushes to this test branch. N
 - **Game controls:** choose White or Black, undo, flip the board or start a new game.
 - **Rules and feedback:** supports castling, en passant, all four promotion choices, check and checkmate, plus draws by stalemate, repetition, the fifty-move rule and insufficient material. Results appear when a game ends.
 - **Home-screen installation:** includes a PWA manifest and Service Worker for mobile and desktop browsers.
-- **Chinese and English interface:** switch languages without starting a new game; both languages and their installation metadata are available offline after setup.
+- **Chinese, English and German interface:** switch languages without starting a new game. All three languages and their installation metadata are available offline after setup. German move notation is displayed with local piece letters without changing saved games.
 
 > The Standard setting targets a casual experience around 1000, not an officially calibrated rating. Battery efficiency is a design goal, not a measured battery-life claim; actual consumption depends on the device, screen brightness and session length.
 
@@ -43,7 +43,7 @@ GitHub Pages currently updates the test site after pushes to this test branch. N
 
 The first visit must download the resources. A home-screen icon does not prove caching has finished, so the disconnected restart test matters. Do not clear the site’s browser data while away; browsers may also evict cached resources when storage is low.
 
-The offline check verifies the current version, the controlling Service Worker and all application cache paths, including both languages. It does not continuously probe the network. A successful check describes the current state, not a guarantee that the browser will retain the cache forever. Missing resources, inaccessible storage or failed installation show **Offline not ready** (or **离线未就绪**) instead of treating a network connection as proof of readiness.
+The offline check verifies the current version, the controlling Service Worker and all application cache paths, including all three languages. It does not continuously probe the network. A successful check describes the current state, not a guarantee that the browser will retain the cache forever. Missing resources, inaccessible storage or failed installation show a localized **Offline not ready** state instead of treating a network connection as proof of readiness.
 
 ### Run locally
 
@@ -115,10 +115,11 @@ dist/
 ├── app.js                 # Chess rules, computer opponent, UI and saves
 ├── runtime.js             # Audio cleanup and pending-turn scheduling
 ├── offline.js             # Resource list, readiness checks and updates
-├── i18n.js                # Interface translations and language selection
+├── i18n.js                # Three interface languages and language selection
 ├── sw.js                  # Offline asset caching
 ├── manifest.webmanifest   # PWA installation metadata
 ├── manifest.en.webmanifest # English installation metadata
+├── manifest.de.webmanifest # German installation metadata
 ├── icon.svg               # Application icon
 └── pieces/                # 12 piece SVGs and artwork license files
 ```
@@ -143,7 +144,7 @@ These SVG pieces are licensed under **GPL-2.0-or-later**. See [COPYING.txt](dist
 
 起因很简单：去乞力马扎罗徒步，没有网络，也想在山间休息时下盘棋。于是做了这个小应用，让棋盘和电脑对手都留在手机里。
 
-README 提供中英文说明；游戏界面支持简体中文和英语。首次打开按浏览器语言选择，也可以在应用中手动切换，选择会保存在本机。
+README 和游戏界面支持简体中文、英语、德语。首次打开按浏览器语言选择，也可以随时在应用中手动切换，选择会保存在本机。
 
 ### 公开测试版
 
@@ -164,7 +165,7 @@ GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和
 - **对局操作**：选择执白或执黑、悔棋、翻转棋盘、开始新局。
 - **规则与反馈**：支持王车易位、吃过路兵、四种升变选择、将军和将死，以及逼和、重复局面、五十回合和子力不足判和；对局结束时显示胜负或和棋反馈。
 - **可安装到主屏幕**：提供 PWA 清单与 Service Worker，适配手机和桌面浏览器。
-- **中英双语界面**：切换语言不会重开棋局；两种语言和安装信息会在准备完成后一起离线缓存。
+- **中英德三语界面**：切换语言不会重开棋局；三种语言和安装信息会在准备完成后一起离线缓存。德语走棋记录显示德语棋子缩写，不改动原有存档。
 
 > 标准档以约 1000 分的休闲体验为目标，未经过正式等级分校准。省电是设计取向，尚无标准化续航测试；实际耗电取决于设备、屏幕亮度与使用时间。
 
@@ -176,7 +177,7 @@ GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和
 
 首次访问需要下载资源。安装图标本身不等于缓存一定完成，因此出发前的断网测试很重要。离线期间不要清除该站点的浏览器数据；浏览器也可能因存储空间不足而回收缓存。
 
-“检查离线资源”会核验当前版本、控制页面的 Service Worker，以及本应用全部缓存路径（含两种语言）；不会通过持续联网探测来判断就绪。检查结果只代表当前状态，无法保证浏览器今后不会清理缓存。缺失资源、存储不可用或离线安装失败时，会显示“离线未就绪”，而不是仅凭有网络就提示可离线。
+“检查离线资源”会核验当前版本、控制页面的 Service Worker，以及本应用全部缓存路径（含三种语言）；不会通过持续联网探测来判断就绪。检查结果只代表当前状态，无法保证浏览器今后不会清理缓存。缺失资源、存储不可用或离线安装失败时，会显示对应语言的“离线未就绪”，而不是仅凭有网络就提示可离线。
 
 ### 本地运行
 
@@ -248,10 +249,11 @@ dist/
 ├── app.js                 # 棋局规则、电脑对手、交互与存档
 ├── runtime.js             # 音频资源回收与后台回合暂停
 ├── offline.js             # 离线资源清单、就绪自检与更新管理
-├── i18n.js                # 界面翻译与语言选择
+├── i18n.js                # 中英德界面翻译与语言选择
 ├── sw.js                  # 离线资源缓存
 ├── manifest.webmanifest   # PWA 安装信息
 ├── manifest.en.webmanifest # 英语安装信息
+├── manifest.de.webmanifest # 德语安装信息
 ├── icon.svg               # 应用图标
 └── pieces/                # 12 个棋子 SVG 与素材许可
 ```
@@ -263,3 +265,15 @@ dist/
 后、车、象、马、兵的图形改编自 Colin M. L. Burnett（Cburnett）的棋子素材，来源与修改说明见 [NOTICE.txt](dist/pieces/NOTICE.txt)。国王使用为本项目重新绘制的几何造型。
 
 这些 SVG 棋子采用 **GPL-2.0-or-later**，完整许可见 [COPYING.txt](dist/pieces/COPYING.txt)，仓库内 SVG 即可编辑源码。该声明针对棋子素材；应用其余代码尚未指定独立的开源许可证。
+
+---
+
+<a id="deutsch"></a>
+
+## Deutsch
+
+Bergschach ist eine kleine Schach-App für Wanderungen und Reisen ohne Netzempfang. Der Computergegner läuft direkt auf dem Gerät; nach der ersten Einrichtung kannst du ohne Internet spielen. Die Oberfläche gibt es auf Deutsch, Englisch und vereinfachtem Chinesisch.
+
+Die App verwendet HTML, CSS und JavaScript ohne Laufzeitbibliotheken. Ein Energiesparmodus reduziert Ton, Vibration und Animationen. Vor der Tour prüft die App, ob alle benötigten Dateien offline gespeichert sind. Spielstand und Sprache bleiben auf dem Gerät.
+
+Zum Offline-Test: Öffne die App zunächst mit Internet über HTTPS, installiere sie bei Bedarf auf dem Startbildschirm und nutze „Offline-Dateien prüfen“. Aktiviere danach den Flugmodus, schließe die App vollständig und öffne sie erneut. Spiele einige Züge gegen den Computer, bevor du ohne Netz aufbrichst.

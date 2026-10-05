@@ -1,0 +1,20 @@
+{
+  "name": "Bergschach",
+  "short_name": "Bergschach",
+  "description": "Offline-Schach gegen den Computer für unterwegs. Etwa 1000 Elo als unverbindliches Spielziel.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071713",
+  "theme_color": "#102a25",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
