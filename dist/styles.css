@@ -156,8 +156,10 @@ button { color: inherit; }
 }
 
 .thinking-badge { display: inline-flex; align-items: center; gap: 7px; }
-.thinking-badge[hidden] { display: none; }
+/* Keep the opponent row's wrapping identical while the computer is idle. */
+.thinking-badge[hidden] { visibility: hidden; }
 .thinking-badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); animation: pulse 1s ease-in-out infinite; }
+.thinking-badge[hidden] i { animation: none; }
 
 .board-frame {
   width: var(--board-size);
@@ -256,8 +258,10 @@ button { color: inherit; }
 }
 
 .eyebrow { color: var(--amber); font-size: 0.69rem; font-weight: 900; letter-spacing: 0.14em; }
-.status-card h1 { margin: 7px 0 5px; font-size: 1.6rem; line-height: 1.2; letter-spacing: -0.03em; }
-.status-card p { min-height: 2.6em; margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+/* Reserve two lines for each status: German turn/check text can wrap.
+   Use minimums, not fixed heights, so larger user fonts never get clipped. */
+.status-card h1 { min-height: 2.4em; margin: 7px 0 5px; font-size: 1.6rem; line-height: 1.2; letter-spacing: -0.03em; }
+.status-card p { min-height: 3em; margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
 
 .side-choice, .difficulty-choice-section, .moves-section { padding-top: 20px; }
 .section-heading { margin-bottom: 10px; display: flex; align-items: baseline; justify-content: space-between; }
@@ -344,8 +348,10 @@ button { color: inherit; }
 .move-row .number { color: var(--muted); font-size: 0.69rem; }
 .move-row .move { font-weight: 700; }
 .move-row .move.latest { padding: 5px 8px; margin-left: -8px; color: var(--amber-strong); background: rgba(240, 189, 100, 0.16); border-radius: 5px; }
-.last-move-summary { margin: 0 0 10px; padding: 9px 11px; color: var(--amber-strong); border-left: 3px solid var(--amber); background: rgba(240, 189, 100, 0.08); border-radius: 0 7px 7px 0; font-size: 0.875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.last-move-summary[hidden] { display: none; }
+.last-move-summary { min-height: calc(2.8em + 18px); margin: 0 0 10px; padding: 9px 11px; color: var(--amber-strong); border-left: 3px solid var(--amber); background: rgba(240, 189, 100, 0.08); border-radius: 0 7px 7px 0; font-size: 0.875rem; line-height: 1.4; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Reserve the same slot before the first move and after undo/new game.
+   visibility also keeps the empty live region out of the accessibility tree. */
+.last-move-summary[hidden] { display: block; visibility: hidden; }
 
 .actions { display: grid; grid-template-columns: 1fr 46px 46px; gap: 8px; padding-top: 18px; }
 .primary-action, .icon-action, .install-button, .dialog-confirm {
