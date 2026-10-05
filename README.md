@@ -1,12 +1,148 @@
-# 高山棋局 · chessOffline
+# Kilimanjaro Chess · chessOffline
+
+[English](#english) | [简体中文](#chinese)
+
+<a id="english"></a>
+
+## English
+
+A lightweight, battery-conscious offline chess app built for hiking trips. Play against a local computer opponent and pick up where you left off—even when there’s no signal.
+
+The idea was simple: on a hiking trip to Kilimanjaro, I wanted to play chess during breaks without relying on a network connection. So I built a small app that keeps both the board and the computer opponent on the phone.
+
+The README is bilingual; the game interface is currently in Simplified Chinese.
+
+### Public test version
+
+[Play the test version](https://logic-syd.github.io/chessOffline/dist/)
+
+The test site is published from `feature/power-saving`. The candidate version is `1.1.0`; it has not yet been merged into the stable `main` branch. Share the link with a friend and open it in Safari or Chrome. Check the version in the page footer, then follow the offline preparation steps below. Saved games on this test site are separate from those on the older site hosted on a different domain.
+
+GitHub Pages currently updates the test site after pushes to this test branch. Neither `main` nor release tags are automatically deployed by that configuration. Before deleting the test branch, change the Pages publishing source or disable the test site.
+
+### Features
+
+- **Offline play against the computer:** all chess calculations run on the device. Once the initial cache is complete, no network connection is needed to play.
+- **A lightweight opponent:** designed for a casual experience targeting roughly a 1000 rating.
+- **Battery-conscious design:** plain HTML, CSS and JavaScript, with no framework or third-party runtime dependencies. The computer calculates only on its turn, without continuous background analysis.
+- **Power-saving mode:** enabled by default. It disables sound and vibration and reduces visual effects, while retaining last-move highlights and static game-result feedback. Pending computer turns pause when the page is hidden. Actual battery use depends on the device; no percentage saving is promised.
+- **Automatic saves:** reopen the app in the same browser on the same device to continue an unfinished game.
+- **A readable board:** solid pieces, an angular king design, highlighted move origins and destinations, and a move list.
+- **Game controls:** choose White or Black, undo, flip the board or start a new game.
+- **Rules and feedback:** supports castling, en passant, all four promotion choices, check and checkmate, plus draws by stalemate, repetition, the fifty-move rule and insufficient material. Results appear when a game ends.
+- **Home-screen installation:** includes a PWA manifest and Service Worker for mobile and desktop browsers.
+
+> “Roughly 1000” is an experience target, not an officially calibrated rating. Battery efficiency is a design goal, not a measured battery-life claim; actual consumption depends on the device, screen brightness and session length.
+
+### Before your trip: prepare for offline play
+
+1. While online, open the app over **HTTPS** in your phone’s browser. Wait for the page, pieces and offline cache to load. Tap **检查离线资源** (“Check offline resources”) to verify readiness.
+2. Tap **安装到手机** (“Install on phone”), or use your browser’s **Install app / Add to Home Screen** option. The exact menu differs between browsers. Open the installed app once while still online and check readiness there too.
+3. **Enable airplane mode and make sure Wi-Fi is off. Fully close and reopen the app, play a few moves and wait for the computer’s response.** Complete this test before heading out.
+
+The first visit must download the resources. A home-screen icon does not prove caching has finished, so the disconnected restart test matters. Do not clear the site’s browser data while away; browsers may also evict cached resources when storage is low.
+
+The offline check verifies the current version, the controlling Service Worker and all 22 application cache paths. It does not continuously probe the network. A successful check describes the current state, not a guarantee that the browser will retain the cache forever. Missing resources, inaccessible storage or failed installation show **离线未就绪** (“Offline not ready”) instead of treating a network connection as proof of readiness.
+
+### Run locally
+
+This is a static project: no npm installation and no build step are required. With Python 3 installed, run:
+
+```sh
+git clone https://github.com/Logic-syd/chessOffline.git
+cd chessOffline
+# Select the current test version; omit this line to run main instead.
+git switch feature/power-saving
+python3 -m http.server 8080 --bind 127.0.0.1 --directory dist
+```
+
+Open [http://localhost:8080](http://localhost:8080) on that computer.
+
+Service Workers require a secure context such as HTTPS or `localhost`. Double-clicking `index.html`, or opening a plain HTTP LAN address on a phone, is not a reliable way to install the offline app. For phone use, deploy `dist/` to an HTTPS static host first.
+
+### Static deployment
+
+Publish the entire contents of `dist/`, retaining the `pieces/` subdirectory and its license files, and enable HTTPS. No backend, server-side database or API key is required.
+
+When application assets change, use the version command below to update the offline cache version as well. Devices can receive updates when they next open the app online; offline devices continue using their cached version. Only the test branch described above currently has automatic publishing configured. Other branches and Git tags do not automatically update the website; a production deployment remains a separate decision.
+
+### Simple version management
+
+`VERSION` is the canonical version file, and [CHANGELOG.md](CHANGELOG.md) records changes. The footer displays the current version. The offline cache changes with the app version, while the existing saved-game storage key stays unchanged.
+
+Versions use `major.minor.patch`: `patch` for compatible fixes (1.0.0 → 1.0.1), `minor` for compatible features (→ 1.1.0), and `major` for incompatible changes (→ 2.0.0). The first formal tag is `v1.0.0`; earlier internal cache identifiers are not release versions.
+
+The maintenance scripts require Node.js 16.20 or later, with no package installation. Playing the game does not require Node.js. Run these commands from the repository root:
+
+```sh
+# Check agreement between VERSION, the page, the cache and the changelog.
+node scripts/version.mjs --check
+
+# Run all automated tests.
+node --test tests/*.test.mjs
+
+# After making changes, increment the version with a short summary.
+node scripts/version.mjs patch "Fix a board display issue"
+```
+
+The upgrade command updates `VERSION`, the page’s version label, the Service Worker cache version and the changelog together. It does not commit, tag, push or access the network. Do not edit only `VERSION`, because the consistency check will then fail.
+
+Development uses **stable `main` + short-lived `feature/*` / `fix/*` branches**. Behavior changes go through small PRs and tests; low-risk documentation changes may go directly to `main`. There are no permanent `dev`, `test` or `release` branches. Workflow choices depend on release cadence, risk, support for older versions and team capabilities—not code size.
+
+Prepare the version on a feature branch, then **tag the corresponding `main` commit only after the PR has merged and post-merge checks pass**. The `Checks` CI workflow validates syntax, versions and tests; it does not merge or deploy. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and examples (in Chinese).
+
+Each `vX.Y.Z` tag identifies a fixed, traceable release. Never move or overwrite shared tags; `v1.0.0` stays unchanged. Use `git show v1.0.0:CHANGELOG.md` to inspect an older changelog, or download a tagged source archive from GitHub’s Tags page.
+
+### Saved games and privacy
+
+The game, move list, board orientation and side preference are stored in the browser’s `localStorage`. After a reload, up to the latest 30 half-moves of undo history are retained.
+
+The app requires no account, does not upload games, and contains no advertising or analytics SDK. Saves do not sync between devices. Changing browsers or site domains, or clearing site data, can make previous saves unavailable. Use a regular browser session rather than private browsing.
+
+### Project structure
+
+```text
+VERSION                    # Canonical version number
+CHANGELOG.md               # Changes by version
+CONTRIBUTING.md            # Branch, PR, testing and release workflow
+.github/workflows/check.yml # Read-only CI checks; no deployment
+scripts/version.mjs        # Dependency-free version checks and upgrades
+tests/                     # Tests using Node's built-in tools
+dist/
+├── index.html             # Page structure
+├── styles.css             # Board, responsive layout and game feedback
+├── app.js                 # Chess rules, computer opponent, UI and saves
+├── runtime.js             # Audio cleanup and pending-turn scheduling
+├── offline.js             # Resource list, readiness checks and updates
+├── sw.js                  # Offline asset caching
+├── manifest.webmanifest   # PWA installation metadata
+├── icon.svg               # Application icon
+└── pieces/                # 12 piece SVGs and artwork license files
+```
+
+The opponent uses shallow search, position evaluation and a little randomness to keep computation modest and games casual. It is not a professional chess analysis engine.
+
+### Piece artwork and licensing
+
+Queen, rook, bishop, knight and pawn artwork is adapted from Colin M. L. Burnett (Cburnett). Sources and modifications are documented in [NOTICE.txt](dist/pieces/NOTICE.txt). The king uses a geometric design redrawn for this project.
+
+These SVG pieces are licensed under **GPL-2.0-or-later**. See [COPYING.txt](dist/pieces/COPYING.txt) for the full license; the SVG files are their editable source. This statement applies to the piece artwork. The remaining application code does not yet have a separate open-source license.
+
+---
+
+<a id="chinese"></a>
+
+## 简体中文
+
+### 高山棋局 · chessOffline
 
 为徒步旅途打造的轻量离线国际象棋应用，以低功耗为设计目标。
 
 起因很简单：去乞力马扎罗徒步，没有网络，也想在山间休息时下盘棋。于是做了这个小应用，让棋盘和电脑对手都留在手机里。
 
-A lightweight, battery-conscious offline chess app built for hiking trips. Play against a local computer opponent and pick up where you left off—even when there’s no signal.
+README 提供中英文说明；游戏界面目前为简体中文。
 
-## 公开测试版
+### 公开测试版
 
 [打开测试版棋盘](https://logic-syd.github.io/chessOffline/dist/)
 
@@ -14,7 +150,7 @@ A lightweight, battery-conscious offline chess app built for hiking trips. Play 
 
 GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和发布标签不会因此自动部署。测试结束后，删除该分支前应先调整 Pages 发布源或停用测试站。
 
-## 功能
+### 功能
 
 - **离线人机对弈**：电脑计算在本机完成，完成首次缓存后，无需网络即可游玩。
 - **轻量电脑对手**：以约 1000 分的休闲体验为目标，适合旅途中来上一局。
@@ -28,23 +164,25 @@ GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和
 
 > “约 1000 分”是体验目标，未经过正式等级分校准。省电是设计取向，尚无标准化续航测试；实际耗电取决于设备、屏幕亮度与使用时间。
 
-## 出发前：准备离线使用
+### 出发前：准备离线使用
 
 1. 在有网络时，用手机浏览器打开已通过 **HTTPS** 部署的应用，等待页面和所有棋子加载完成、离线缓存建立，并使用应用中的离线资源检查确认准备状态。
-2. 点击应用中的“安装到手机”，或使用浏览器的“安装应用 / 添加到主屏幕”。不同浏览器的入口可能不同。
-3. **开启飞行模式，关闭后重新打开应用，实际走几步并等待电脑回应。** 确认这一步成功，再带它出发。
+2. 点击应用中的“安装到手机”，或使用浏览器的“安装应用 / 添加到主屏幕”。不同浏览器的入口可能不同。安装后先保持联网，从主屏幕打开应用，再检查一次离线就绪状态。
+3. **开启飞行模式，并确认 Wi-Fi 已关闭；彻底关闭应用后重新打开，实际走几步并等待电脑回应。** 确认这一步成功，再带它出发。
 
 首次访问需要下载资源。安装图标本身不等于缓存一定完成，因此出发前的断网测试很重要。离线期间不要清除该站点的浏览器数据；浏览器也可能因存储空间不足而回收缓存。
 
 “检查离线资源”会核验当前版本、控制页面的 Service Worker，以及本应用全部 22 项缓存路径；不会通过持续联网探测来判断就绪。检查结果只代表当前状态，无法保证浏览器今后不会清理缓存。缺失资源、存储不可用或离线安装失败时，会显示“离线未就绪”，而不是仅凭有网络就提示可离线。
 
-## 本地运行
+### 本地运行
 
 这是一个纯静态项目，不需要安装 npm 依赖，也没有构建步骤。安装 Python 3 后运行：
 
 ```sh
 git clone https://github.com/Logic-syd/chessOffline.git
 cd chessOffline
+# 运行当前测试版；如需运行 main，可省略下一行。
+git switch feature/power-saving
 python3 -m http.server 8080 --bind 127.0.0.1 --directory dist
 ```
 
@@ -52,13 +190,13 @@ python3 -m http.server 8080 --bind 127.0.0.1 --directory dist
 
 Service Worker 需要 HTTPS 或 `localhost` 等安全上下文。直接双击 `index.html`，或让手机访问普通的局域网 HTTP 地址，不能可靠地完成离线安装。手机使用应先将 `dist/` 部署到支持 HTTPS 的静态网站托管服务。
 
-## 静态部署
+### 静态部署
 
 将 `dist/` 的全部内容作为网站发布目录，保留 `pieces/` 子目录及其中的许可文件，并启用 HTTPS。无需后端、数据库或 API 密钥。
 
 更新应用资源时，请通过下面的版本命令同步更新离线缓存版本。设备再次联网打开应用后，才有机会获取新版本；已经离线的设备会继续使用缓存版本。当前只有上方指定的测试分支已配置自动发布；其他分支或 Git 标签不会自动更新网站，正式发布仍需单独确认部署。
 
-## 简单版本管理
+### 简单版本管理
 
 `VERSION` 是版本号的唯一维护入口，历史变更记录在 [CHANGELOG.md](CHANGELOG.md)。页面底部会显示当前版本；离线缓存随版本更新，已有棋局的存储标识保持不变。
 
@@ -85,13 +223,13 @@ node scripts/version.mjs patch "修复棋盘显示问题"
 
 每个 `vX.Y.Z` 标签固定一个可追溯版本，不移动或覆盖已有标签；`v1.0.0` 保持不变。想查看旧版本时可用 `git show v1.0.0:CHANGELOG.md`，也可在 GitHub 的 Tags 页面下载对应源码。
 
-## 存档与隐私
+### 存档与隐私
 
 棋局、走棋记录、棋盘方向和阵营选择保存在浏览器的 `localStorage` 中，刷新后最多保留最近 30 个半回合的悔棋状态。
 
 应用本身不需要注册账号，不上传棋局，也没有广告或分析 SDK。存档不会在设备间同步；更换浏览器、切换网站域名或清除站点数据，都可能使原存档不可用。建议使用普通浏览模式，而不是无痕模式。
 
-## 项目结构
+### 项目结构
 
 ```text
 VERSION                   # 唯一维护的版本号
@@ -114,7 +252,7 @@ dist/
 
 电脑使用浅层搜索、局面评估和少量随机选择，以控制计算量并提供轻松的对弈体验。它不是专业棋力分析引擎。
 
-## 棋子素材与许可
+### 棋子素材与许可
 
 后、车、象、马、兵的图形改编自 Colin M. L. Burnett（Cburnett）的棋子素材，来源与修改说明见 [NOTICE.txt](dist/pieces/NOTICE.txt)。国王使用为本项目重新绘制的几何造型。
 
