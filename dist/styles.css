@@ -244,6 +244,9 @@ button { color: inherit; }
   min-height: 520px;
 }
 
+.language-control { align-self: flex-end; display: flex; align-items: center; gap: 9px; margin-bottom: 12px; color: var(--muted); font-size: 0.72rem; font-weight: 700; }
+.language-control select { min-height: 34px; padding: 4px 26px 4px 9px; color: var(--ink); background: var(--pine-850); border: 1px solid var(--line); border-radius: 8px; font: inherit; cursor: pointer; }
+
 .status-card {
   padding: 22px 22px 20px;
   background: linear-gradient(145deg, rgba(31, 74, 63, 0.68), rgba(18, 50, 42, 0.68));
@@ -285,7 +288,6 @@ button { color: inherit; }
   cursor: pointer;
 }
 
-.side-button span { font: 22px/1 Georgia, serif; }
 .side-button img { width: 26px; height: 26px; }
 .side-button.active { color: var(--pine-950); background: var(--snow); box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16); }
 
@@ -355,7 +357,7 @@ button { color: inherit; }
 
 .primary-action:active, .icon-action:active, .install-button:active, .dialog-confirm:active { transform: translateY(1px); }
 .primary-action { min-height: 46px; color: var(--pine-950); background: var(--amber); border-radius: 12px; }
-.primary-action span { margin-right: 7px; font-size: 1.15rem; }
+.primary-action span:first-child { margin-right: 7px; font-size: 1.15rem; }
 .primary-action:hover { background: var(--amber-strong); }
 .icon-action { min-height: 46px; color: var(--ink); background: rgba(31, 73, 62, 0.52); border: 1px solid var(--line); border-radius: 12px; font-size: 1.3rem; }
 .icon-action:disabled { opacity: 0.35; cursor: not-allowed; }

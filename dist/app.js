@@ -418,6 +418,7 @@
       difficultyLabel: document.getElementById("difficultyLabel"),
       difficultyDetail: document.getElementById("difficultyDetail"),
       opponentDifficulty: document.getElementById("opponentDifficulty"),
+      languageSelect: document.getElementById("languageSelect"),
     };
 
     let game;
@@ -435,17 +436,22 @@
     const SETTINGS_KEY = "kilimanjaro-chess-settings-v1";
     let powerSaving = true;
     let difficulty = "standard";
+    let savedLocale;
     try {
       const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY));
       powerSaving = settings?.powerSaving !== false;
       if (Object.prototype.hasOwnProperty.call(DIFFICULTY_PROFILES, settings?.difficulty)) difficulty = settings.difficulty;
+      savedLocale = settings?.locale;
     } catch (_) { /* Default to hiking-friendly settings. */ }
+    const i18n = window.ChessI18n.createI18n(savedLocale, navigator.languages?.length ? navigator.languages : [navigator.language]);
+    const t = (key, params) => i18n.t(key, params);
+    i18n.apply(document);
     const sound = window.ChessRuntime.createFeedback({
       audioClass: window.AudioContext || window.webkitAudioContext,
       vibrate: pattern => navigator.vibrate?.(pattern),
     });
     let offlineManager;
-    let offlineStatus = { state: "checking", message: "正在检查离线资源，请稍候。" };
+    let offlineStatus = { state: "checking", code: "checking", message: t("offline.checking") };
 
     function load() {
       try {
@@ -475,7 +481,7 @@
     }
 
     function saveSettings() {
-      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ powerSaving, difficulty })); }
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ powerSaving, difficulty, locale: i18n.locale })); }
       catch (_) { return false; }
       return true;
     }
@@ -487,10 +493,8 @@
     function applyPowerSaving() {
       document.body.classList.toggle("power-saving", powerSaving);
       elements.powerSaveButton.setAttribute("aria-pressed", String(powerSaving));
-      elements.powerSaveState.textContent = powerSaving ? "已开启" : "已关闭";
-      elements.powerSaveDetail.textContent = powerSaving
-        ? "静音、无震动、减少动效，走棋高亮保留。"
-        : "启用声音、震动和动效；切到后台仍会暂停待执行的电脑回合。";
+      elements.powerSaveState.textContent = t(powerSaving ? "power.on" : "power.off");
+      elements.powerSaveDetail.textContent = t(powerSaving ? "power.detail.on" : "power.detail.off");
       sound.setEnabled(!powerSaving && !document.hidden);
     }
 
@@ -514,7 +518,7 @@
         const button = document.createElement("button");
         button.type = "button";
         button.append(pieceImage(piece));
-        button.setAttribute("aria-label", { q: "后", r: "车", b: "象", n: "马" }[move.promotion]);
+        button.setAttribute("aria-label", t(`promotion.${move.promotion}`));
         button.addEventListener("click", () => {
           elements.promotionDialog.close();
           performMove(move);
@@ -555,16 +559,18 @@
         button.className = `square ${(row + col) % 2 ? "dark" : "light"}`;
         button.dataset.square = algebraic(square);
         button.setAttribute("role", "gridcell");
-        button.setAttribute("aria-label", `${algebraic(square)}${piece ? ` ${pieceColor(piece) === "w" ? "白" : "黑"}${{k:"王",q:"后",r:"车",b:"象",n:"马",p:"兵"}[piece.toLowerCase()]}` : " 空格"}`);
+        button.setAttribute("aria-label", piece
+          ? t("board.squarePiece", { square: algebraic(square), color: t(`color.${pieceColor(piece)}`), piece: t(`piece.${piece.toLowerCase()}`) })
+          : t("board.squareEmpty", { square: algebraic(square) }));
         if (selected === square) button.classList.add("selected");
         if (game.lastMove?.from === square) {
           button.classList.add("last-from");
-          button.setAttribute("aria-label", `${button.getAttribute("aria-label")}，上一步起点`);
+          button.setAttribute("aria-label", `${button.getAttribute("aria-label")}${t("board.lastFrom")}`);
         }
         if (game.lastMove?.to === square) {
           button.classList.add("last-to");
           if (animateDestination) button.classList.add("just-moved");
-          button.setAttribute("aria-label", `${button.getAttribute("aria-label")}，上一步落点`);
+          button.setAttribute("aria-label", `${button.getAttribute("aria-label")}${t("board.lastTo")}`);
         }
         if (checkedKing === square) button.classList.add("checked");
 
@@ -599,21 +605,42 @@
     function renderMoves() {
       if (!game.moveLog.length) {
         elements.movesList.className = "moves-list empty";
-        elements.movesList.innerHTML = '<div class="empty-moves"><span aria-hidden="true">♙</span><p>第一步，从这里开始。</p></div>';
+        const empty = document.createElement("div");
+        empty.className = "empty-moves";
+        const icon = document.createElement("span");
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "♙";
+        const message = document.createElement("p");
+        message.textContent = t("moves.empty");
+        empty.append(icon, message);
+        elements.movesList.replaceChildren(empty);
       } else {
         elements.movesList.className = "moves-list";
-        const rows = [];
+        const rows = document.createDocumentFragment();
         for (let i = 0; i < game.moveLog.length; i += 2) {
           const last = game.moveLog.length - 1;
-          rows.push(`<div class="move-row"><span class="number">${i / 2 + 1}.</span><span class="move${i === last ? " latest" : ""}"${i === last ? ' aria-current="step"' : ""}>${game.moveLog[i] || ""}</span><span class="move${i + 1 === last ? " latest" : ""}"${i + 1 === last ? ' aria-current="step"' : ""}>${game.moveLog[i + 1] || ""}</span></div>`);
+          const row = document.createElement("div");
+          row.className = "move-row";
+          const number = document.createElement("span");
+          number.className = "number";
+          number.textContent = `${i / 2 + 1}.`;
+          row.append(number);
+          for (const index of [i, i + 1]) {
+            const move = document.createElement("span");
+            move.className = `move${index === last ? " latest" : ""}`;
+            if (index === last) move.setAttribute("aria-current", "step");
+            move.textContent = i18n.formatMoveNotation(game.moveLog[index] || "");
+            row.append(move);
+          }
+          rows.append(row);
         }
-        elements.movesList.innerHTML = rows.join("");
+        elements.movesList.replaceChildren(rows);
         elements.movesList.scrollTop = elements.movesList.scrollHeight;
       }
-      elements.moveCount.textContent = `第 ${Math.floor(game.moveLog.length / 2) + 1} 回合`;
+      elements.moveCount.textContent = t("moves.round", { count: Math.floor(game.moveLog.length / 2) + 1 });
       elements.lastMoveSummary.hidden = !game.lastMove;
       elements.lastMoveSummary.textContent = game.lastMove
-        ? `${opponent(game.turn) === game.playerColor ? "你" : "电脑"}的上一步：${algebraic(game.lastMove.from)} → ${algebraic(game.lastMove.to)}`
+        ? t(opponent(game.turn) === game.playerColor ? "moves.lastPlayer" : "moves.lastComputer", { from: algebraic(game.lastMove.from), to: algebraic(game.lastMove.to) })
         : "";
     }
 
@@ -622,31 +649,31 @@
       const playerWon = outcome.winner === game.playerColor;
       if (outcome.over) {
         if (outcome.type === "checkmate") {
-          elements.statusTitle.textContent = playerWon ? "你赢了" : "将死，对局结束";
-          elements.statusDetail.textContent = playerWon ? "漂亮的一局。高山向导认输。" : "再来一局，换条路线试试。";
+          elements.statusTitle.textContent = t(playerWon ? "status.win" : "status.loss");
+          elements.statusDetail.textContent = t(playerWon ? "status.winDetail" : "status.lossDetail");
         } else {
-          elements.statusTitle.textContent = "和棋";
-          elements.statusDetail.textContent = { stalemate: "无子可走，形成逼和。", fifty: "五十回合没有吃子或走兵。", repetition: "同一局面出现了三次。", material: "剩余子力不足以将死。" }[outcome.type];
+          elements.statusTitle.textContent = t("status.draw");
+          elements.statusDetail.textContent = t(`draw.${outcome.type}`);
         }
-        elements.turnIndicator.textContent = "对局结束";
+        elements.turnIndicator.textContent = t("status.gameOver");
       } else if (thinking) {
-        elements.statusTitle.textContent = "向导正在思考";
-        elements.statusDetail.textContent = "所有计算都在这台设备上完成。";
-        elements.turnIndicator.textContent = "对方回合";
+        elements.statusTitle.textContent = t("status.thinkingTitle");
+        elements.statusDetail.textContent = t("status.thinkingDetail");
+        elements.turnIndicator.textContent = t("status.opponentTurn");
       } else if (game.turn === game.playerColor) {
-        elements.statusTitle.textContent = inCheck(game, game.turn) ? "你的王被将军" : "轮到你走";
-        elements.statusDetail.textContent = inCheck(game, game.turn) ? "必须先解除将军。" : "点一下棋子，再点它要去的位置。";
-        elements.turnIndicator.textContent = "轮到你";
+        elements.statusTitle.textContent = t(inCheck(game, game.turn) ? "status.checkTitle" : "status.yourTurn");
+        elements.statusDetail.textContent = t(inCheck(game, game.turn) ? "status.checkDetail" : "status.instructions");
+        elements.turnIndicator.textContent = t("status.yourIndicator");
       } else {
-        elements.statusTitle.textContent = "轮到向导";
-        elements.statusDetail.textContent = "电脑即将在本机完成计算。";
-        elements.turnIndicator.textContent = "对方回合";
+        elements.statusTitle.textContent = t("status.guideTurn");
+        elements.statusDetail.textContent = t("status.guideDetail");
+        elements.turnIndicator.textContent = t("status.opponentTurn");
       }
       elements.thinkingBadge.hidden = !thinking;
     }
 
     function renderSide() {
-      elements.playerSideLabel.textContent = game.playerColor === "w" ? "执白棋" : "执黑棋";
+      elements.playerSideLabel.textContent = t(game.playerColor === "w" ? "player.white" : "player.black");
       for (const button of elements.sideButtons) {
         const active = button.dataset.side === preferredSide;
         button.classList.toggle("active", active);
@@ -655,14 +682,10 @@
     }
 
     function renderDifficulty() {
-      const labels = { easy: "轻松", standard: "标准", challenge: "挑战" };
-      elements.difficultyLabel.textContent = labels[difficulty];
-      elements.opponentDifficulty.textContent = `${labels[difficulty]}档`;
-      elements.difficultyDetail.textContent = {
-        easy: "少算一层，走法更随和。",
-        standard: "保留当前电脑体验，约 1000 分是目标而非正式定级。",
-        challenge: "保持当前搜索深度，稳定选择评估最高的走法。",
-      }[difficulty];
+      const label = t(`difficulty.${difficulty}`);
+      elements.difficultyLabel.textContent = label;
+      elements.opponentDifficulty.textContent = t("difficulty.level", { label });
+      elements.difficultyDetail.textContent = t(`difficulty.detail.${difficulty}`);
       for (const button of elements.difficultyButtons) {
         const active = button.dataset.difficulty === difficulty;
         button.classList.toggle("active", active);
@@ -683,19 +706,15 @@
       const outcome = gameOutcome(game);
       if (!outcome.over) return clearResult();
       const key = `${positionKey(game)}|${game.moveLog.length}|${outcome.type}`;
+      const mood = !outcome.winner ? "draw" : outcome.winner === game.playerColor ? "win" : "loss";
+      elements.resultEyebrow.textContent = t(`result.eyebrow.${mood}`);
+      elements.resultTitle.textContent = t(`result.title.${mood}`);
+      elements.resultDescription.textContent = t(mood === "draw" ? `draw.${outcome.type}` : `result.description.${mood}`);
+      elements.resultScore.textContent = t(`result.score.${mood}`);
       if (shownResultKey === key) return;
       shownResultKey = key;
-      const mood = !outcome.winner ? "draw" : outcome.winner === game.playerColor ? "win" : "loss";
       elements.board.parentElement.dataset.result = mood;
       elements.resultCard.dataset.result = mood;
-      elements.resultEyebrow.textContent = { win: "漂亮的将死", loss: "这一局，向导胜出", draw: "势均力敌" }[mood];
-      elements.resultTitle.textContent = { win: "你赢了！", loss: "再来一局？", draw: "握手言和" }[mood];
-      elements.resultDescription.textContent = mood === "win"
-        ? "这一局的风景，属于你。"
-        : mood === "loss"
-          ? "你的王被将死了。看看最后的棋局，下次再挑战。"
-          : { stalemate: "无子可走，形成逼和。", fifty: "五十回合没有吃子或走兵。", repetition: "同一局面出现了三次。", material: "剩余子力不足以将死。" }[outcome.type];
-      elements.resultScore.textContent = { win: "你  1 : 0  向导", loss: "你  0 : 1  向导", draw: "你  ½ : ½  向导" }[mood];
       elements.resultEmblem.replaceChildren();
       if (mood === "draw") {
         elements.resultEmblem.append(pieceImage("K"), pieceImage("k"));
@@ -745,7 +764,7 @@
       selected = null;
       save();
       render();
-      showToast(side === "w" ? "新对局：你执白棋" : "新对局：你执黑棋");
+      showToast(t(side === "w" ? "toast.newWhite" : "toast.newBlack"));
       if (game.turn !== game.playerColor) scheduleComputer();
     }
 
@@ -761,7 +780,7 @@
       selected = null;
       save();
       render();
-      showToast("已回到你上一步之前");
+      showToast(t("toast.undo"));
     }
 
     function updateConnection() {
@@ -770,9 +789,9 @@
       elements.connectionStatus.classList.toggle("offline", offline);
       elements.connectionStatus.classList.toggle("unready", !ready);
       elements.connectionStatus.querySelector("span:last-child").textContent = ready
-        ? (offline ? "离线已就绪" : "离线准备完成")
-        : (offlineStatus.state === "checking" ? "正在检查" : "离线未就绪");
-      elements.offlineDetail.textContent = offlineStatus.message + (ready && offline ? " 当前没有网络，可继续对弈。" : "");
+        ? t(offline ? "connection.offlineReady" : "connection.ready")
+        : t(offlineStatus.state === "checking" ? "connection.checking" : "connection.unready");
+      elements.offlineDetail.textContent = i18n.offlineMessage(offlineStatus) + (ready && offline ? t("connection.offlineAppend") : "");
       elements.offlineCheckButton.disabled = offlineStatus.state === "checking";
     }
 
@@ -783,8 +802,8 @@
       try {
         safe(context.registerTool({
           name: "read_chess_position",
-          title: "读取当前棋局",
-          description: "读取当前棋局的轮次、最近一步、对局状态和合法走法，不改变棋局。",
+          title: t("webMcp.readTitle"),
+          description: t("webMcp.readDescription"),
           inputSchema: { type: "object", properties: {}, additionalProperties: false },
           annotations: { readOnlyHint: true, untrustedContentHint: false },
           execute() {
@@ -794,12 +813,12 @@
         }));
         safe(context.registerTool({
           name: "start_new_chess_game",
-          title: "开始新棋局",
-          description: "清空当前进度并开始一盘新的离线人机对局。",
+          title: t("webMcp.newTitle"),
+          description: t("webMcp.newDescription"),
           inputSchema: { type: "object", properties: { playerColor: { type: "string", enum: ["white", "black"] } }, required: ["playerColor"], additionalProperties: false },
           annotations: { readOnlyHint: false, untrustedContentHint: false },
           execute(input) {
-            if (!input || !["white", "black"].includes(input.playerColor)) throw new Error("playerColor 必须是 white 或 black");
+            if (!input || !["white", "black"].includes(input.playerColor)) throw new Error(t("webMcp.invalidColor"));
             startNewGame(input.playerColor === "white" ? "w" : "b");
             return { started: true, playerColor: input.playerColor };
           },
@@ -818,13 +837,13 @@
       preferredSide = button.dataset.side;
       renderSide();
       save();
-      showToast(`已选择执${preferredSide === "w" ? "白" : "黑"}，点“新对局”开始`);
+      showToast(t(preferredSide === "w" ? "toast.sideWhite" : "toast.sideBlack"));
     }));
     elements.difficultyButtons.forEach(button => button.addEventListener("click", () => {
       difficulty = button.dataset.difficulty;
       renderDifficulty();
-      if (saveSettings()) showToast(`电脑棋力已设为${elements.difficultyLabel.textContent}，下次电脑走棋生效`);
-      else showToast("棋力本次生效，但设置暂时无法保存。");
+      if (saveSettings()) showToast(t("toast.difficultySaved", { label: elements.difficultyLabel.textContent }));
+      else showToast(t("toast.difficultyUnsaved"));
     }));
 
     window.addEventListener("beforeinstallprompt", event => {
@@ -840,9 +859,7 @@
         return;
       }
       const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      elements.installInstructions.textContent = ios
-        ? "点 Safari 底部的分享按钮，再选择“添加到主屏幕”。请先打开一次，之后没有网络也能继续下棋。"
-        : "在浏览器菜单里选择“安装应用”或“添加到主屏幕”。请先打开一次，之后没有网络也能继续下棋。";
+      elements.installInstructions.textContent = t(ios ? "install.instructions.ios" : "install.instructions.other");
       elements.installDialog.showModal();
     });
 
@@ -851,7 +868,19 @@
     elements.powerSaveButton.addEventListener("click", () => {
       powerSaving = !powerSaving;
       applyPowerSaving();
-      if (!saveSettings()) showToast("设置暂时无法保存，本次使用仍生效。");
+      if (!saveSettings()) showToast(t("toast.settingsUnsaved"));
+    });
+    elements.languageSelect.addEventListener("change", () => {
+      if (!i18n.setLocale(elements.languageSelect.value)) return;
+      i18n.apply(document);
+      applyPowerSaving();
+      render();
+      updateConnection();
+      if (elements.installDialog.open) {
+        const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        elements.installInstructions.textContent = t(ios ? "install.instructions.ios" : "install.instructions.other");
+      }
+      if (!saveSettings()) showToast(t("toast.settingsUnsaved"));
     });
     elements.offlineCheckButton.addEventListener("click", () => offlineManager?.check());
     updateConnection();

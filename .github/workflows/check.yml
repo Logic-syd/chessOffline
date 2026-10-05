@@ -32,6 +32,7 @@ jobs:
           node --check dist/app.js
           node --check dist/sw.js
           node --check dist/offline.js
+          node --check dist/i18n.js
           node --check dist/runtime.js
           node --check scripts/version.mjs
       - name: Check version consistency

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-05
+
+- Add offline Chinese and English interface with saved language selection
+
 ## [1.2.0] - 2026-10-05
 
 - 新增轻松、标准、挑战三档电脑棋力选择

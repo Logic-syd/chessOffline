@@ -101,10 +101,9 @@ function browserFixture({ controlled = true, info, rejectRegister = false, secur
 }
 
 test("shell includes every offline application file and all twelve pieces", () => {
-  assert.equal(offline.APP_SHELL.length, 22);
-  assert.equal(new Set(offline.APP_SHELL).size, 22);
+  assert.equal(new Set(offline.APP_SHELL).size, offline.APP_SHELL.length);
   for (const path of offline.APP_SHELL) assert.ok(existsSync(new URL(`../dist/${path}`, import.meta.url)), `Missing file: ${path}`);
-  for (const path of ["./", "./index.html", "./styles.css", "./app.js", "./offline.js", "./runtime.js", "./manifest.webmanifest", "./icon.svg", "./pieces/COPYING.txt", "./pieces/NOTICE.txt"]) {
+  for (const path of ["./", "./index.html", "./styles.css", "./app.js", "./offline.js", "./runtime.js", "./i18n.js", "./manifest.webmanifest", "./manifest.en.webmanifest", "./icon.svg", "./pieces/COPYING.txt", "./pieces/NOTICE.txt"]) {
     assert.ok(offline.APP_SHELL.includes(path), path);
   }
   assert.equal(offline.APP_SHELL.filter(path => /pieces\/.+\.svg$/.test(path)).length, 12);
