@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - main
+      - 'feature/**'
 
 permissions:
   contents: read
@@ -35,6 +36,7 @@ jobs:
           node --check dist/i18n.js
           node --check dist/runtime.js
           node --check scripts/version.mjs
+          node --check tests/layout.browser.js
       - name: Check version consistency
         run: node scripts/version.mjs --check
       - name: Run tests without installing dependencies
