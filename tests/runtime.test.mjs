@@ -2,6 +2,46 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import runtime from "../dist/runtime.js";
 
+test("responsive controls move the same nodes, restore desktop order and keep focus", () => {
+  const makeNode = name => ({
+    name, children: [], parentElement: null,
+    contains(child) { return child === this || this.children.some(node => node.contains(child)); },
+    append(child) { this.insertBefore(child, null); },
+    insertBefore(child, before) {
+      if (child.parentElement) child.parentElement.children.splice(child.parentElement.children.indexOf(child), 1);
+      const index = before ? this.children.indexOf(before) : this.children.length;
+      assert.ok(index >= 0);
+      this.children.splice(index, 0, child);
+      child.parentElement = this;
+    },
+  });
+  const [topbar, panel, language, status, moves, actions, install, undo] =
+    ["topbar", "panel", "language", "status", "moves", "actions", "install", "undo"].map(makeNode);
+  [language, status, moves, actions, install].forEach(node => panel.append(node));
+  actions.append(undo);
+  const focusCalls = [];
+  undo.focus = options => focusCalls.push(options);
+  const doc = {
+    activeElement: undo,
+    querySelector: selector => ({ ".topbar": topbar, ".control-panel": panel,
+      ".language-control": language, ".status-card": status, ".actions": actions })[selector],
+    getElementById: id => id === "installButton" ? install : null,
+  };
+  for (const compact of [true, false, true, false]) {
+    runtime.placeResponsiveControls(doc, compact);
+    assert.deepEqual(topbar.children.map(node => node.name), compact ? ["language"] : []);
+    assert.deepEqual(panel.children.map(node => node.name), compact
+      ? ["actions", "status", "moves", "install"]
+      : ["language", "status", "moves", "actions", "install"]);
+    assert.equal(actions.children[0], undo);
+    assert.equal(language.parentElement, compact ? topbar : panel);
+    assert.deepEqual(focusCalls.at(-1), { preventScroll: true });
+  }
+  doc.activeElement = null;
+  runtime.placeResponsiveControls(doc, true);
+  assert.equal(focusCalls.length, 4, "do not steal focus from unrelated content");
+});
+
 function clock() {
   let id = 0;
   const jobs = new Map();

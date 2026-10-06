@@ -4,7 +4,7 @@
   const runButton = document.getElementById("run");
   const output = document.getElementById("results");
   const frame = document.getElementById("preview");
-  const widths = [320, 390, 580, 768, 900, 901, 1024, 1280];
+  const widths = [320, 375, 390, 430, 580, 768, 900, 901, 1024, 1280];
   const states = [
     ["initial", "yourTurn", "instructions", "yourIndicator", null],
     ["player-moved", "guideTurn", "guideDetail", "opponentTurn", "lastPlayer"],
@@ -35,7 +35,7 @@
   async function run() {
     runButton.disabled = true;
     output.textContent = "Running…";
-    const failures = [], checks = [], installChecks = [];
+    const failures = [], checks = [], installChecks = [], controlChecks = [];
     try {
       const response = await fetch("../dist/index.html", { cache: "no-store" });
       if (!response.ok) throw new Error(`App markup: HTTP ${response.status}`);
@@ -61,6 +61,7 @@
         doc.getElementById("powerSaveDetail").textContent = i18n.t("power.detail.on");
         for (const width of widths) {
           frame.width = String(width);
+          ChessRuntime.placeResponsiveControls(doc, width <= 900);
           let initial;
           for (const [name, title, detail, indicator, lastMove] of states) {
             doc.getElementById("statusTitle").textContent = i18n.t(`status.${title}`);
@@ -82,6 +83,29 @@
               overflow,
             });
           }
+          const rect = selector => doc.querySelector(selector).getBoundingClientRect();
+          const compact = width <= 900;
+          const language = doc.querySelector(".language-control");
+          const actions = doc.querySelector(".actions");
+          const placed = compact
+            ? language.parentElement === doc.querySelector(".topbar")
+              && actions.nextElementSibling === doc.querySelector(".status-card")
+              && rect(".language-control").top < rect(".play-area").top
+              && Math.abs(rect(".language-control").right - rect(".topbar").right) < 1
+              && rect(".actions").top >= rect(".play-area").bottom
+              && rect(".actions").bottom <= rect(".status-card").top
+              && rect(".status-card").height < 120
+            : language.parentElement === doc.querySelector(".control-panel")
+              && actions.previousElementSibling === doc.querySelector(".moves-section");
+          const unique = ["languageSelect", "newGameButton", "undoButton", "flipButton"]
+            .every(id => doc.querySelectorAll(`#${id}`).length === 1);
+          const reachable = [...actions.querySelectorAll("button")].every(button => {
+            const bounds = button.getBoundingClientRect();
+            return bounds.width >= 44 && bounds.height >= 44;
+          });
+          const controlResult = { locale, width, state: "responsive-controls", placed, unique, reachable };
+          controlChecks.push(controlResult);
+          if (!placed || !unique || !reachable) failures.push(controlResult);
         }
       }
       // Check the real translated dialog without invoking a browser installation.
@@ -92,6 +116,7 @@
         for (const [width, height] of [[320, 568], [390, 844], [1280, 900]]) {
           frame.width = String(width);
           frame.height = String(height);
+          ChessRuntime.placeResponsiveControls(doc, width <= 900);
           dialog.showModal();
           await settle();
           const bounds = dialog.getBoundingClientRect();
@@ -107,7 +132,8 @@
       }
       // DOM output is intentionally readable by a human or browser automation.
       output.textContent = JSON.stringify({ passed: !failures.length, checked: checks.length,
-        installChecked: installChecks.length, failing: failures.length, failures }, null, 2);
+        installChecked: installChecks.length, controlsChecked: controlChecks.length,
+        failing: failures.length, failures }, null, 2);
     } catch (error) {
       output.textContent = `ERROR: ${error.message}`;
     } finally {

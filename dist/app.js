@@ -420,6 +420,11 @@
       languageSelect: document.getElementById("languageSelect"),
     };
 
+    const compactLayout = window.matchMedia("(max-width: 900px)");
+    const placeControls = () => window.ChessRuntime.placeResponsiveControls(document, compactLayout.matches);
+    placeControls();
+    compactLayout.addEventListener("change", placeControls);
+
     let game;
     let undoStack = [];
     let selected = null;

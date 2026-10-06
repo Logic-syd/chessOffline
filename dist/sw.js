@@ -1,6 +1,6 @@
 importScripts("./offline.js");
 const CACHE_PREFIX = ChessOffline.scopePrefix(self.registration.scope);
-const APP_VERSION = "1.4.2";
+const APP_VERSION = "1.4.3";
 const CACHE_NAME = `${CACHE_PREFIX}v${APP_VERSION}`;
 const APP_SHELL = ChessOffline.APP_SHELL;
 

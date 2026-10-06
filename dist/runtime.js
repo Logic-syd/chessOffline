@@ -88,5 +88,20 @@
     return { schedule, cancel };
   }
 
-  return { createFeedback, createTurnScheduler };
+  // Move existing controls only at layout breakpoints: keep listeners, IDs and
+  // keyboard order intact without a second set of buttons or a resize loop.
+  function placeResponsiveControls(doc, compact) {
+    const panel = doc.querySelector(".control-panel");
+    const language = doc.querySelector(".language-control");
+    const actions = doc.querySelector(".actions");
+    const status = doc.querySelector(".status-card");
+    const focused = doc.activeElement;
+    const restoreFocus = language.contains(focused) || actions.contains(focused);
+    if (compact) doc.querySelector(".topbar").append(language);
+    else panel.insertBefore(language, status);
+    panel.insertBefore(actions, compact ? status : doc.getElementById("installButton"));
+    if (restoreFocus) focused.focus({ preventScroll: true });
+  }
+
+  return { createFeedback, createTurnScheduler, placeResponsiveControls };
 });
