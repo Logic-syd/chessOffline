@@ -5,8 +5,8 @@
 })(typeof globalThis === "object" ? globalThis : self, function () {
   "use strict";
   const APP_SHELL = [
-    "./", "./index.html", "./styles.css", "./app.js", "./offline.js", "./runtime.js",
-    "./manifest.webmanifest", "./icon.svg", "./pieces/NOTICE.txt", "./pieces/COPYING.txt",
+    "./", "./index.html", "./styles.css", "./app.js", "./offline.js", "./runtime.js", "./i18n.js",
+    "./manifest.webmanifest", "./manifest.en.webmanifest", "./manifest.de.webmanifest", "./icon.svg", "./pieces/NOTICE.txt", "./pieces/COPYING.txt",
     ...["w", "b"].flatMap(color => ["K", "Q", "R", "B", "N", "P"].map(piece => `./pieces/${color}${piece}.svg`)),
   ];
 
@@ -42,14 +42,14 @@
     async function check() {
       const current = ++sequence;
       if (!sw || !env.MessageChannel || env.isSecureContext === false) {
-        return emit("unsupported", "此环境不支持离线安装，请使用 HTTPS 或本机 localhost 打开。");
+        return emit("unsupported", "此环境不支持离线安装，请使用 HTTPS 或本机 localhost 打开。", { code: "unsupported" });
       }
       if (!owns(sw.controller)) {
         return emit(registrationError ? "error" : "missing", registrationError
           ? "离线安装未成功，请联网后重新打开；当前不能保证离线使用。"
-          : "离线尚未准备完成，首次打开请保持联网。");
+          : "离线尚未准备完成，首次打开请保持联网。", { code: registrationError ? "registrationFailed" : "pending" });
       }
-      emit("checking", "正在检查本机离线资源…");
+      emit("checking", "正在检查本机离线资源…", { code: "checkingLocal" });
       const controller = sw.controller;
       const channel = new env.MessageChannel();
       try {
@@ -60,14 +60,14 @@
         }), 4000);
         if (current !== sequence) return;
         if (sw.controller !== controller) return check();
-        if (!info || info.error) return emit("error", "无法读取离线缓存，请检查浏览器存储权限后重试。");
+        if (!info || info.error) return emit("error", "无法读取离线缓存，请检查浏览器存储权限后重试。", { code: "cacheError" });
         if (info.scope !== scope || info.version !== version || !Array.isArray(info.missing)) {
-          return emit("missing", "离线版本尚未就绪，请联网完成更新后再检查。");
+          return emit("missing", "离线版本尚未就绪，请联网完成更新后再检查。", { code: "versionPending" });
         }
-        if (info.missing.length) return emit("missing", `离线资源不完整（缺少 ${info.missing.length} 项），请先保持联网使用，完成应用更新后再检查。`, { missing: info.missing });
-        return emit("ready", registrationError ? "离线准备完成；本次更新检查未完成。" : "离线准备完成，建议用飞行模式重新打开验证。");
+        if (info.missing.length) return emit("missing", `离线资源不完整（缺少 ${info.missing.length} 项），请先保持联网使用，完成应用更新后再检查。`, { missing: info.missing, count: info.missing.length, code: "incomplete" });
+        return emit("ready", registrationError ? "离线准备完成；本次更新检查未完成。" : "离线准备完成，建议用飞行模式重新打开验证。", { code: registrationError ? "readyLimited" : "ready" });
       } catch (_) {
-        if (current === sequence) return emit("error", "离线检查未完成，请稍后重试；当前不能保证离线使用。");
+        if (current === sequence) return emit("error", "离线检查未完成，请稍后重试；当前不能保证离线使用。", { code: "checkError" });
       } finally {
         channel.port1.close();
         channel.port2.close();
@@ -82,7 +82,7 @@
       if (!reloading && owns(initialController) && owns(sw.controller) && sw.controller !== initialController) {
         reloading = true;
         Promise.resolve().then(() => beforeReload && beforeReload()).then(() => env.location.reload()).catch(() => {
-          emit("error", "新版本已就绪，但保存棋局失败；请先保留当前页面。");
+          emit("error", "新版本已就绪，但保存棋局失败；请先保留当前页面。", { code: "saveError" });
         });
       } else if (!reloading) check();
     });

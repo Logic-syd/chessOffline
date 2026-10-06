@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-10-06
+
+- 优化手机布局：操作按钮移至棋盘下方、语言切换移至右上角，压缩状态卡并保留桌面布局与键盘顺序。
+
+## [1.4.2] - 2026-10-06
+
+- 统一中英德安装引导，移除将 iPhone/iPad 等同于 Safari 的判断，明确浏览器差异和出发前断网验证。
+
+## [1.4.1] - 2026-10-05
+
+- 修复德语及多语言回合切换时的布局抖动，为动态文字预留空间并增加 264 场景浏览器回归检查。
+
+## [1.4.0] - 2026-10-05
+
+- Add German interface and localized chess move notation
+
+## [1.3.0] - 2026-10-05
+
+- Add offline Chinese and English interface with saved language selection
+
 ## [1.2.0] - 2026-10-05
 
 - 新增轻松、标准、挑战三档电脑棋力选择
