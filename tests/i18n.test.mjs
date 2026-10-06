@@ -6,6 +6,7 @@ import test from "node:test";
 const require = createRequire(import.meta.url);
 const { MESSAGES, preferredLocale, createI18n } = require("../dist/i18n.js");
 const html = readFileSync(new URL("../dist/index.html", import.meta.url), "utf8");
+const app = readFileSync(new URL("../dist/app.js", import.meta.url), "utf8");
 
 test("each language covers all interface and accessible-label keys", () => {
   const keys = Object.keys(MESSAGES.zh).sort();
@@ -23,6 +24,38 @@ test("saved choice wins over browser language, with English fallback", () => {
   assert.equal(i18n.t("moves.round", { count: 7 }), "Move 7");
   assert.equal(i18n.setLocale("zh"), true);
   assert.equal(i18n.t("moves.round", { count: 7 }), "第 7 回合");
+});
+
+test("install help is browser-neutral and requires an offline check in every language", () => {
+  assert.doesNotMatch(app, /navigator\.userAgent|install\.instructions\.(?:ios|other)/);
+  const [, key, fallback] = html.match(/id="installInstructions" data-i18n="([^"]+)">([^<]+)</);
+  assert.equal(key, "install.instructions");
+  assert.equal(fallback, MESSAGES.zh[key]);
+  for (const [locale, messages] of Object.entries(MESSAGES)) {
+    assert.deepEqual(Object.keys(messages).filter(name => name.startsWith("install.instructions")), [key]);
+    assert.doesNotMatch(messages[key], /Safari|Chrome|Firefox|Edge|iPhone|iPad/i, locale);
+    assert.ok(messages[key].includes(messages["offline.check"]), locale);
+    assert.match(messages[key], /飞行模式|airplane mode|Flugmodus/);
+    assert.match(messages[key], /关闭 Wi-Fi|Wi-Fi off|ausgeschaltetem WLAN/);
+  }
+});
+
+test("install help follows normal translation updates, including an open dialog", () => {
+  const instructions = { dataset: { i18n: "install.instructions" }, textContent: "" };
+  const dialog = { open: true };
+  const doc = {
+    documentElement: {},
+    querySelector: () => null,
+    querySelectorAll: selector => selector === "[data-i18n]" ? [instructions] : [],
+    getElementById: id => id === "installDialog" ? dialog : null,
+  };
+  const i18n = createI18n("zh", []);
+  for (const locale of ["zh", "en", "de", "zh"]) {
+    i18n.setLocale(locale);
+    i18n.apply(doc);
+    assert.equal(instructions.textContent, MESSAGES[locale]["install.instructions"]);
+    assert.equal(dialog.open, true);
+  }
 });
 
 test("offline results translate from stable codes without changing their data", () => {

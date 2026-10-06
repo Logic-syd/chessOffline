@@ -35,12 +35,13 @@
   async function run() {
     runButton.disabled = true;
     output.textContent = "Running…";
-    const failures = [], checks = [];
+    const failures = [], checks = [], installChecks = [];
     try {
       const response = await fetch("../dist/index.html", { cache: "no-store" });
       if (!response.ok) throw new Error(`App markup: HTTP ${response.status}`);
       const markup = (await response.text())
         .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<html\b/, '<html translate="no"')
         .replace("<head>", `<head><base href="${new URL("../dist/", location.href).href}">`);
       const loaded = new Promise(resolve => frame.addEventListener("load", resolve, { once: true }));
       frame.srcdoc = markup;
@@ -83,9 +84,30 @@
           }
         }
       }
+      // Check the real translated dialog without invoking a browser installation.
+      const dialog = doc.getElementById("installDialog");
+      for (const locale of ["zh", "en", "de"]) {
+        const i18n = ChessI18n.createI18n(locale, []);
+        i18n.apply(doc);
+        for (const [width, height] of [[320, 568], [390, 844], [1280, 900]]) {
+          frame.width = String(width);
+          frame.height = String(height);
+          dialog.showModal();
+          await settle();
+          const bounds = dialog.getBoundingClientRect();
+          const close = dialog.querySelector(".dialog-close").getBoundingClientRect();
+          const correctText = doc.getElementById("installInstructions").textContent === i18n.t("install.instructions");
+          const fits = bounds.left >= 0 && bounds.right <= width && bounds.top >= 0 && bounds.bottom <= height
+            && dialog.scrollWidth <= dialog.clientWidth && close.top >= 0 && close.bottom <= height;
+          const result = { locale, width, height, state: "install-dialog", correctText, fits };
+          installChecks.push(result);
+          if (!correctText || !fits) failures.push(result);
+          dialog.close();
+        }
+      }
       // DOM output is intentionally readable by a human or browser automation.
       output.textContent = JSON.stringify({ passed: !failures.length, checked: checks.length,
-        failing: failures.length, failures }, null, 2);
+        installChecked: installChecks.length, failing: failures.length, failures }, null, 2);
     } catch (error) {
       output.textContent = `ERROR: ${error.message}`;
     } finally {

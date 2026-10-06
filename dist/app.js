@@ -403,7 +403,6 @@
       flipButton: document.getElementById("flipButton"),
       installButton: document.getElementById("installButton"),
       installDialog: document.getElementById("installDialog"),
-      installInstructions: document.getElementById("installInstructions"),
       promotionDialog: document.getElementById("promotionDialog"),
       promotionOptions: document.getElementById("promotionOptions"),
       connectionStatus: document.getElementById("connectionStatus"),
@@ -858,8 +857,6 @@
         installPrompt = null;
         return;
       }
-      const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      elements.installInstructions.textContent = t(ios ? "install.instructions.ios" : "install.instructions.other");
       elements.installDialog.showModal();
     });
 
@@ -876,10 +873,6 @@
       applyPowerSaving();
       render();
       updateConnection();
-      if (elements.installDialog.open) {
-        const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        elements.installInstructions.textContent = t(ios ? "install.instructions.ios" : "install.instructions.other");
-      }
       if (!saveSettings()) showToast(t("toast.settingsUnsaved"));
     });
     elements.offlineCheckButton.addEventListener("click", () => offlineManager?.check());

@@ -16,7 +16,7 @@ The README and game interface support Simplified Chinese, English and German. Th
 
 [Play the test version](https://logic-syd.github.io/chessOffline/dist/)
 
-The public test site is published from `feature/i18n` at version `1.4.1`, with Chinese, English and German available in the language selector. This patch fixes layout shifts between turns, including longer German status text. The earlier `1.2.0` test version has been merged into `main`; the multilingual version remains on its feature branch for testing. Share the link with a friend and open it in Safari or Chrome. Check the version in the page footer, then follow the offline preparation steps below. Existing users should reopen the app while online to receive the update. Saved games on this test site are separate from those on the older site hosted on a different domain.
+The public test site is published from `feature/i18n` at version `1.4.2`, with Chinese, English and German available in the language selector. It includes the turn-layout fix and browser-neutral installation help. The earlier `1.2.0` test version has been merged into `main`; the multilingual version remains on its feature branch for testing. Share the link with a friend and open it in their preferred browser. Installation and offline support vary by browser and device. Check the version in the page footer, then follow the offline preparation steps below. Existing users should reopen the app while online to receive the update. Saved games on this test site are separate from those on the older site hosted on a different domain.
 
 GitHub Pages currently updates the test site after pushes to this test branch. Neither `main` nor release tags are automatically deployed by that configuration. Before deleting the test branch, change the Pages publishing source or disable the test site.
 
@@ -38,7 +38,7 @@ GitHub Pages currently updates the test site after pushes to this test branch. N
 ### Before your trip: prepare for offline play
 
 1. While online, open the app over **HTTPS** in your phone’s browser. Wait for the page, pieces and offline cache to load. Tap **Check offline files** (or **检查离线资源**) to verify readiness.
-2. Tap **Install on phone** (or **安装到手机**), or use your browser’s **Install app / Add to Home Screen** option. The exact menu differs between browsers. Open the installed app once while still online and check readiness there too.
+2. Tap **Install on phone** (or **安装到手机**). If the browser offers an installation prompt, follow it; otherwise look under **Share** or the browser menu for **Install app / Add to Home Screen**. Availability and steps vary by browser. If no installation option is available, you can continue in the browser, but verify offline readiness there instead of assuming it works. Open the app while online from the entry point you plan to use on your trip (browser or home-screen icon), then check readiness there too.
 3. **Enable airplane mode and make sure Wi-Fi is off. Fully close and reopen the app, play a few moves and wait for the computer’s response.** Complete this test before heading out.
 
 The first visit must download the resources. A home-screen icon does not prove caching has finished, so the disconnected restart test matters. Do not clear the site’s browser data while away; browsers may also evict cached resources when storage is low.
@@ -150,7 +150,7 @@ README 和游戏界面支持简体中文、英语、德语。首次打开按浏�
 
 [打开测试版棋盘](https://logic-syd.github.io/chessOffline/dist/)
 
-公开测试站从 `feature/i18n` 分支发布，页面版本为 `1.4.1`，可在语言选择器中切换中文、英语和德语。本次修订修复回合切换时的布局抖动，包括较长的德语状态文案。此前的 `1.2.0` 测试版已经合入 `main`；多语言版本仍保留在功能分支供测试。可以直接把链接发给朋友，用 Safari 或 Chrome 打开，先确认页面底部版本，再按下方步骤检查离线使用。使用过旧版的用户请先联网重新打开应用，以接收更新。测试站的棋局与其他域名上的旧站独立保存。
+公开测试站从 `feature/i18n` 分支发布，页面版本为 `1.4.2`，可在语言选择器中切换中文、英语和德语。已包含回合布局抖动修复，以及不限定浏览器的安装引导。此前的 `1.2.0` 测试版已经合入 `main`；多语言版本仍保留在功能分支供测试。可以直接把链接发给朋友，用她常用的浏览器打开；安装与离线支持因浏览器和设备而异。先确认页面底部版本，再按下方步骤检查离线使用。使用过旧版的用户请先联网重新打开应用，以接收更新。测试站的棋局与其他域名上的旧站独立保存。
 
 GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和发布标签不会因此自动部署。测试结束后，删除该分支前应先调整 Pages 发布源或停用测试站。
 
@@ -172,7 +172,7 @@ GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和
 ### 出发前：准备离线使用
 
 1. 在有网络时，用手机浏览器打开已通过 **HTTPS** 部署的应用，等待页面和所有棋子加载完成、离线缓存建立，并使用应用中的离线资源检查确认准备状态。
-2. 点击应用中的“安装到手机”，或使用浏览器的“安装应用 / 添加到主屏幕”。不同浏览器的入口可能不同。安装后先保持联网，从主屏幕打开应用，再检查一次离线就绪状态。
+2. 点击应用中的“安装到手机”。如果浏览器提供安装弹窗，按提示操作；否则在“分享”或浏览器菜单中查找“安装应用 / 添加到主屏幕”。入口与支持情况因浏览器而异。没有安装选项时可以继续在浏览器中游玩，但需在那里验证离线就绪，不能默认可离线。出发前，请在实际准备使用的入口（浏览器或主屏幕图标）联网打开，再检查一次离线就绪状态。
 3. **开启飞行模式，并确认 Wi-Fi 已关闭；彻底关闭应用后重新打开，实际走几步并等待电脑回应。** 确认这一步成功，再带它出发。
 
 首次访问需要下载资源。安装图标本身不等于缓存一定完成，因此出发前的断网测试很重要。离线期间不要清除该站点的浏览器数据；浏览器也可能因存储空间不足而回收缓存。
