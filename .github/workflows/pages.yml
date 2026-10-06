@@ -1,0 +1,80 @@
+name: Publish release and test Pages
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
+    branches: [main, feature/i18n]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-release-and-test
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       (github.event.workflow_run.head_branch == 'main' ||
+        github.event.workflow_run.head_branch == 'feature/i18n'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout deployment instructions
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: current
+          persist-credentials: false
+      - name: Checkout fixed production release
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: v1.4.3
+          path: release
+          persist-credentials: false
+      - name: Checkout public test branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch == 'feature/i18n' && github.event.workflow_run.head_sha || 'feature/i18n' }}
+          path: preview
+          persist-credentials: false
+      - name: Verify and assemble both channels
+        run: |
+          cd current
+          node scripts/version.mjs --check
+          cd ..
+          cd release
+          node scripts/version.mjs --check
+          cd ..
+          cd preview
+          node scripts/version.mjs --check
+          cd ..
+          node current/scripts/prepare-pages.mjs release preview site
+          node --check site/test/app.js
+          test -f site/dist/index.html
+          test -f site/test/index.html
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy both channels
+        id: deployment
+        uses: actions/deploy-pages@v4
