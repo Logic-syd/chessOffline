@@ -12,13 +12,13 @@ The idea was simple: on a hiking trip to Kilimanjaro, I wanted to play chess dur
 
 The README and game interface support Simplified Chinese, English and German. The browser language selects the interface on first use; you can switch manually at any time. Your choice is saved on this device.
 
-### Public test version
+### Play and test
 
-[Play the test version](https://logic-syd.github.io/chessOffline/dist/)
+- [Stable game](https://logic-syd.github.io/chessOffline/) (redirects to `/dist/`): deployed from the fixed `v1.4.3` release tag. This preserves the former `/dist/` URL and its existing local saves.
+- [Public test game](https://logic-syd.github.io/chessOffline/test/): deployed from `feature/i18n` after its checks pass. Use it to try changes before the next release. The packaging step namespaces its game/settings storage keys; its Service Worker, cache and PWA scope are also separate.
+- [itch.io game page](https://yidan-shao.itch.io/bergschach): a separately uploaded v1.4.3 package and storefront. GitHub Pages deployment does not update itch.io.
 
-The public test site is published from `feature/i18n` at version `1.4.3`, with Chinese, English and German available in the language selector. It includes the turn-layout fix, browser-neutral installation help and compact mobile controls. On narrow screens, the language selector is at the top right and New game, Undo and Flip board sit below the board, before the compact status card. Desktop control placement is unchanged. The `v1.4.3` release brings this tested work to `main` through a PR, preserving the separate bilingual, German and bug-fix commits. The feature branch is retained as the Pages publishing source. Share the link with a friend and open it in their preferred browser. Installation and offline support vary by browser and device. Check the version in the page footer, then follow the offline preparation steps below. Existing users should reopen the app while online to receive the update. Saved games on this test site are separate from those on the older site hosted on a different domain.
-
-GitHub Pages currently updates the test site after pushes to this test branch. Neither `main` nor release tags are automatically deployed by that configuration. Before deleting the test branch, change the Pages publishing source or disable the test site.
+Both Pages addresses share a domain, so this is a release/test separation, not a security boundary. The test branch is a publishing input, not a merge target for unfinished features: future features still use short PR branches. Updating the stable game requires a reviewed `main` merge, a new immutable version tag, and a separate deployment change; test pushes alone cannot change the stable release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the release sequence.
 
 ### Features
 
@@ -63,7 +63,7 @@ Service Workers require a secure context such as HTTPS or `localhost`. Double-cl
 
 Publish the entire contents of `dist/`, retaining the `pieces/` subdirectory and its license files, and enable HTTPS. No backend, server-side database or API key is required.
 
-When application assets change, use the version command below to update the offline cache version as well. Devices can receive updates when they next open the app online; offline devices continue using their cached version. Only the test branch described above currently has automatic publishing configured. Other branches and Git tags do not automatically update the website; a production deployment remains a separate decision.
+When application assets change, use the version command below to update the offline cache version as well. Devices can receive updates when they next open the app online; offline devices continue using their cached version. The Pages workflow assembles the pinned production tag and test branch into separate paths; pushing a new tag alone does not publish it until the workflow's pinned release is reviewed and updated.
 
 ### Simple version management
 
@@ -104,7 +104,9 @@ The app requires no account, does not upload games, and contains no advertising 
 VERSION                    # Canonical version number
 CHANGELOG.md               # Changes by version
 CONTRIBUTING.md            # Branch, PR, testing and release workflow
-.github/workflows/check.yml # Read-only CI checks; no deployment
+.github/workflows/check.yml # Read-only CI checks
+.github/workflows/pages.yml # Tagged stable build + public test deployment
+scripts/prepare-pages.mjs  # Build separate Pages paths without a framework
 scripts/version.mjs        # Dependency-free version checks and upgrades
 tests/                     # Tests using Node's built-in tools
 dist/
@@ -144,13 +146,13 @@ These SVG pieces are licensed under **GPL-2.0-or-later**. See [COPYING.txt](dist
 
 README 和游戏界面支持简体中文、英语、德语。首次打开按浏览器语言选择，也可以随时在应用中手动切换，选择会保存在本机。
 
-### 公开测试版
+### 正式版与测试版
 
-[打开测试版棋盘](https://logic-syd.github.io/chessOffline/dist/)
+- [正式版棋盘](https://logic-syd.github.io/chessOffline/)（跳转至 `/dist/`）：固定取 `v1.4.3` 标签，保留原 `/dist/` 地址和原有本地棋局。
+- [公开测试版棋盘](https://logic-syd.github.io/chessOffline/test/)：从 `feature/i18n` 分支发布，检查通过后更新。打包步骤给测试版的棋局与设置使用不同的存储键；Service Worker、离线缓存和 PWA 作用域也分开。
+- [itch.io 游戏页](https://yidan-shao.itch.io/bergschach)：单独上传的 v1.4.3 包与作品展示页；GitHub Pages 更新不会自动更新 itch.io。
 
-公开测试站从 `feature/i18n` 分支发布，页面版本为 `1.4.3`，可在语言选择器中切换中文、英语和德语。已包含回合布局抖动修复、不限定浏览器的安装引导及紧凑的手机操作区。窄屏下语言切换位于右上角，新对局、悔棋、翻转按钮紧接棋盘下方，后面是缩小的状态卡；桌面版控件位置不变。`v1.4.3` 发布将这批已测试的改动通过 PR 合入 `main`，保留双语、德语和修复的独立提交；功能分支继续保留为 Pages 发布源。可以直接把链接发给朋友，用她常用的浏览器打开；安装与离线支持因浏览器和设备而异。先确认页面底部版本，再按下方步骤检查离线使用。使用过旧版的用户请先联网重新打开应用，以接收更新。测试站的棋局与其他域名上的旧站独立保存。
-
-GitHub Pages 目前会在这个测试分支推送后更新测试站；`main` 和发布标签不会因此自动部署。测试结束后，删除该分支前应先调整 Pages 发布源或停用测试站。
+两个 Pages 地址仍在同一域名下；这是发布与测试流程的区分，不是安全隔离。测试分支只是发布输入，不代替短期功能分支上的 PR。未来更新正式版需先合并 `main`、打不可移动的新版本标签，再审核修改部署工作流中固定的标签；只推测试分支不会改变正式版。具体步骤见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ### 功能
 
@@ -195,7 +197,7 @@ Service Worker 需要 HTTPS 或 `localhost` 等安全上下文。直接双击 `i
 
 将 `dist/` 的全部内容作为网站发布目录，保留 `pieces/` 子目录及其中的许可文件，并启用 HTTPS。无需后端、数据库或 API 密钥。
 
-更新应用资源时，请通过下面的版本命令同步更新离线缓存版本。设备再次联网打开应用后，才有机会获取新版本；已经离线的设备会继续使用缓存版本。当前只有上方指定的测试分支已配置自动发布；其他分支或 Git 标签不会自动更新网站，正式发布仍需单独确认部署。
+更新应用资源时，请通过下面的版本命令同步更新离线缓存版本。设备再次联网打开应用后，才有机会获取新版本；已经离线的设备会继续使用缓存版本。Pages 工作流把固定的正式版标签与测试分支打包到两个路径。新标签本身不会自动发布；还需审查并修改工作流中固定的发布标签。
 
 ### 简单版本管理
 
